@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { DataAnalysis, Document, Promotion, Search, Setting, Share } from '@element-plus/icons-vue'
 import { apiGet, apiPost } from './api'
@@ -19,7 +19,6 @@ const ticketDetail = ref(null)
 const detailVisible = ref(false)
 const formEditorTab = ref('fields')
 const flowEditorTab = ref('meta')
-const formPreviewData = ref({})
 
 const loading = reactive({
   forms: false,
@@ -148,19 +147,8 @@ const formSummary = computed(() => ({
   selectCount: formEditor.fields.filter((item) => item.type === 'select').length,
 }))
 
-watch(
-  () => formEditor.id,
-  () => {
-    formPreviewData.value = {}
-  },
-)
-
 function handleMenuSelect(value) {
   activeMenu.value = value
-}
-
-function updateFormPreviewData(value) {
-  formPreviewData.value = value
 }
 
 function normalizeFieldEdit(field) {
@@ -389,7 +377,6 @@ function editForm(row) {
     fields: (row.fields || []).map(normalizeFieldEdit),
   })
   formEditorTab.value = 'fields'
-  formPreviewData.value = {}
   activeMenu.value = 'forms'
 }
 
@@ -463,7 +450,6 @@ function openTicketDetailWithData(data) {
 function resetFormEditor() {
   applyFormEditor(emptyFormEditor())
   formEditorTab.value = 'fields'
-  formPreviewData.value = {}
 }
 
 function resetNodeEditor() {
@@ -476,17 +462,6 @@ function resetNodeEditor() {
 function resetFlowEditor() {
   applyFlowEditor(emptyFlowEditor())
   flowEditorTab.value = 'meta'
-}
-
-function resolveFieldTypeLabel(type) {
-  const map = {
-    input: '单行文本',
-    textarea: '多行文本',
-    number: '数字',
-    select: '下拉框',
-    date: '日期',
-  }
-  return map[type] || type
 }
 
 function resolveNodeStateLabel(state) {
@@ -613,7 +588,7 @@ onMounted(async () => {
           </el-card>
 
           <el-row :gutter="16">
-            <el-col :span="7">
+            <el-col :span="6">
               <el-card shadow="never" class="section-card designer-side-card">
                 <template #header>
                   <div class="card-header">
@@ -637,13 +612,13 @@ onMounted(async () => {
               </el-card>
             </el-col>
 
-            <el-col :span="10">
+            <el-col :span="18">
               <el-card shadow="never" class="section-card designer-center-card">
                 <template #header>
                   <div class="card-header">
                     <div>
-                      <div class="section-title">表单设计器</div>
-                      <div class="section-subtitle">用基础信息、字段设计两个工作区组织配置内容</div>
+                      <div class="section-title">表单设计器 Playground</div>
+                      <div class="section-subtitle">基础信息负责描述表单，设计画布负责拖入组件并在右侧配置字段属性。</div>
                     </div>
                     <div>
                       <el-button @click="resetFormEditor">新建</el-button>
@@ -683,53 +658,10 @@ onMounted(async () => {
                     </div>
                   </el-tab-pane>
 
-                  <el-tab-pane label="字段设计" name="fields">
+                  <el-tab-pane label="设计画布" name="fields">
                     <FieldDesignerTable v-model="formEditor.fields" />
                   </el-tab-pane>
                 </el-tabs>
-              </el-card>
-            </el-col>
-
-            <el-col :span="7">
-              <el-card shadow="never" class="section-card designer-preview-card">
-                <template #header>
-                  <div class="card-header">
-                    <div>
-                      <div class="section-title">实时预览</div>
-                      <div class="section-subtitle">接近 pure-admin 中右侧属性/预览面板的结构</div>
-                    </div>
-                    <el-icon class="preview-icon"><DataAnalysis /></el-icon>
-                  </div>
-                </template>
-
-                <el-descriptions :column="1" border class="compact-descriptions">
-                  <el-descriptions-item label="表单名称">{{ formEditor.name || '-' }}</el-descriptions-item>
-                  <el-descriptions-item label="表单编码">{{ formEditor.formCode || '-' }}</el-descriptions-item>
-                  <el-descriptions-item label="字段数量">{{ formSummary.fieldCount }}</el-descriptions-item>
-                  <el-descriptions-item label="下拉字段">{{ formSummary.selectCount }}</el-descriptions-item>
-                </el-descriptions>
-
-                <el-divider>字段清单</el-divider>
-                <div class="preview-chip-list" v-if="formEditor.fields.length">
-                  <div v-for="field in formEditor.fields" :key="field.key || field.label" class="preview-chip">
-                    <div class="preview-chip-main">
-                      <span class="preview-chip-label">{{ field.label || '未命名字段' }}</span>
-                      <el-tag size="small" effect="plain">{{ resolveFieldTypeLabel(field.type) }}</el-tag>
-                    </div>
-                    <div class="preview-chip-sub">
-                      <span>{{ field.key || '-' }}</span>
-                      <span v-if="field.required" class="required-dot">必填</span>
-                    </div>
-                  </div>
-                </div>
-                <el-empty v-else description="暂无字段配置" />
-
-                <el-divider>交互预览</el-divider>
-                <DynamicFormRenderer
-                  :schema="serializeFields(formEditor.fields)"
-                  :model-value="formPreviewData"
-                  @update:model-value="updateFormPreviewData"
-                />
               </el-card>
             </el-col>
           </el-row>
