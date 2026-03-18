@@ -1,28 +1,36 @@
 package com.example.demo;
 
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.boot.test.web.server.LocalServerPort;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-@AutoConfigureMockMvc
-@SpringBootTest
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class DemoApplicationTests {
 
-	@Autowired
-	private MockMvc mockMvc;
+	@LocalServerPort
+	private int port;
 
 	@Test
 	void helloEndpointReturnsDefaultGreeting() throws Exception {
-		mockMvc.perform(get("/api/hello"))
-			.andExpect(status().isOk())
-			.andExpect(jsonPath("$.message").value("Hello, World!"))
-			.andExpect(jsonPath("$.framework").value("Spring Boot"));
+		HttpClient client = HttpClient.newHttpClient();
+		HttpRequest request = HttpRequest.newBuilder()
+			.uri(URI.create("http://localhost:" + port + "/api/hello"))
+			.GET()
+			.build();
+
+		HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+		assertEquals(200, response.statusCode());
+		assertTrue(response.body().contains("\"message\":\"Hello, World!\""));
+		assertTrue(response.body().contains("\"framework\":\"Spring Boot\""));
 	}
 
 }
