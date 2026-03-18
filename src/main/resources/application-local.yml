@@ -1,7 +1,7 @@
 spring:
   datasource:
     driver-class-name: org.h2.Driver
-    url: jdbc:h2:mem:ticket_workflow;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DATABASE_TO_LOWER=TRUE;NON_KEYWORDS=VALUE
+    url: jdbc:h2:mem:ticket_workflow;MODE=LEGACY;DB_CLOSE_DELAY=-1;DATABASE_TO_LOWER=TRUE;NON_KEYWORDS=VALUE
     username: sa
     password:
   h2:
