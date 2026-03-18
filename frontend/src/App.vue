@@ -1,7 +1,7 @@
 <script setup>
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
-import { Document, Promotion, Search, Setting, Share } from '@element-plus/icons-vue'
+import { DataAnalysis, Document, Promotion, Search, Setting, Share } from '@element-plus/icons-vue'
 import { apiGet, apiPost } from './api'
 import DynamicFormRenderer from './components/DynamicFormRenderer.vue'
 import FieldDesignerTable from './components/FieldDesignerTable.vue'
@@ -17,6 +17,9 @@ const tasks = ref([])
 const selectedTask = ref(null)
 const ticketDetail = ref(null)
 const detailVisible = ref(false)
+const formEditorTab = ref('fields')
+const flowEditorTab = ref('meta')
+const formPreviewData = ref({})
 
 const loading = reactive({
   forms: false,
@@ -123,9 +126,41 @@ const startNextOptions = computed(() =>
 const flowSelectedNodes = computed(() =>
   nodes.value.filter((item) => flowEditor.nodeIds.includes(item.id)),
 )
+const orderedFlowSelectedNodes = computed(() =>
+  flowEditor.nodeIds
+    .map((id) => nodes.value.find((item) => item.id === id))
+    .filter(Boolean),
+)
+const flowStartNode = computed(() =>
+  orderedFlowSelectedNodes.value.find((item) => item.id === flowEditor.startNodeId) || null,
+)
+const flowCloseNodes = computed(() =>
+  orderedFlowSelectedNodes.value.filter((item) => item.nodeState === 'CLOSE'),
+)
+const flowSummary = computed(() => ({
+  nodeCount: orderedFlowSelectedNodes.value.length,
+  transitionCount: flowEditor.transitions.length,
+  closeCount: flowCloseNodes.value.length,
+}))
+const formSummary = computed(() => ({
+  fieldCount: formEditor.fields.length,
+  requiredCount: formEditor.fields.filter((item) => item.required).length,
+  selectCount: formEditor.fields.filter((item) => item.type === 'select').length,
+}))
+
+watch(
+  () => formEditor.id,
+  () => {
+    formPreviewData.value = {}
+  },
+)
 
 function handleMenuSelect(value) {
   activeMenu.value = value
+}
+
+function updateFormPreviewData(value) {
+  formPreviewData.value = value
 }
 
 function normalizeFieldEdit(field) {
@@ -353,6 +388,8 @@ function editForm(row) {
     description: row.description,
     fields: (row.fields || []).map(normalizeFieldEdit),
   })
+  formEditorTab.value = 'fields'
+  formPreviewData.value = {}
   activeMenu.value = 'forms'
 }
 
@@ -385,6 +422,7 @@ function editFlow(row) {
       sortNo: item.sortNo,
     })),
   })
+  flowEditorTab.value = 'graph'
   activeMenu.value = 'flows'
 }
 
@@ -424,6 +462,8 @@ function openTicketDetailWithData(data) {
 
 function resetFormEditor() {
   applyFormEditor(emptyFormEditor())
+  formEditorTab.value = 'fields'
+  formPreviewData.value = {}
 }
 
 function resetNodeEditor() {
@@ -435,6 +475,56 @@ function resetNodeEditor() {
 
 function resetFlowEditor() {
   applyFlowEditor(emptyFlowEditor())
+  flowEditorTab.value = 'meta'
+}
+
+function resolveFieldTypeLabel(type) {
+  const map = {
+    input: '单行文本',
+    textarea: '多行文本',
+    number: '数字',
+    select: '下拉框',
+    date: '日期',
+  }
+  return map[type] || type
+}
+
+function resolveNodeStateLabel(state) {
+  const map = {
+    START: '开始',
+    AUDIT: '审核',
+    HANDLE: '处理',
+    CLOSE: '关闭',
+  }
+  return map[state] || state
+}
+
+function resolveNodeStateTagType(state) {
+  const map = {
+    START: 'success',
+    AUDIT: 'warning',
+    HANDLE: 'primary',
+    CLOSE: 'info',
+  }
+  return map[state] || 'info'
+}
+
+function resolveActionLabel(action) {
+  const map = {
+    SUBMIT: '提交',
+    APPROVE: '审核',
+    PROCESS: '处理',
+    FINISH: '关闭',
+  }
+  return map[action] || action
+}
+
+function getNodeName(nodeId) {
+  return nodes.value.find((item) => item.id === nodeId)?.name || `#${nodeId}`
+}
+
+function getNodeState(nodeId) {
+  return nodes.value.find((item) => item.id === nodeId)?.nodeState || ''
 }
 
 function formatValue(value) {
@@ -497,22 +587,48 @@ onMounted(async () => {
 
       <el-main class="layout-main">
         <template v-if="activeMenu === 'forms'">
+          <el-card shadow="never" class="page-intro-card">
+            <div class="page-intro">
+              <div>
+                <div class="page-intro-title">表单设计</div>
+                <div class="page-intro-desc">
+                  参考 vue-pure-admin 常见的配置页结构，将表单目录、设计器与实时预览拆成多区域协同，适合做低代码式字段编排。
+                </div>
+              </div>
+              <div class="stat-grid">
+                <div class="stat-item">
+                  <div class="stat-label">表单总数</div>
+                  <div class="stat-value">{{ forms.length }}</div>
+                </div>
+                <div class="stat-item">
+                  <div class="stat-label">当前字段</div>
+                  <div class="stat-value">{{ formSummary.fieldCount }}</div>
+                </div>
+                <div class="stat-item">
+                  <div class="stat-label">必填字段</div>
+                  <div class="stat-value">{{ formSummary.requiredCount }}</div>
+                </div>
+              </div>
+            </div>
+          </el-card>
+
           <el-row :gutter="16">
-            <el-col :span="9">
-              <el-card shadow="never" class="section-card">
+            <el-col :span="7">
+              <el-card shadow="never" class="section-card designer-side-card">
                 <template #header>
                   <div class="card-header">
-                    <span>表单列表</span>
+                    <span>表单目录</span>
                     <el-button link type="primary" @click="fetchForms">刷新</el-button>
                   </div>
                 </template>
-                <el-table :data="forms" stripe>
-                  <el-table-column prop="formCode" label="编码" min-width="120" />
-                  <el-table-column prop="name" label="名称" min-width="120" />
-                  <el-table-column label="字段数" width="80">
+                <div class="catalog-tip">点击列表记录可回填到右侧设计器。</div>
+                <el-table :data="forms" stripe height="620">
+                  <el-table-column prop="name" label="表单名称" min-width="140" />
+                  <el-table-column prop="formCode" label="编码" min-width="130" />
+                  <el-table-column label="字段数" width="76">
                     <template #default="{ row }">{{ row.fields?.length || 0 }}</template>
                   </el-table-column>
-                  <el-table-column label="操作" width="70">
+                  <el-table-column label="操作" width="72">
                     <template #default="{ row }">
                       <el-button link type="primary" @click="editForm(row)">编辑</el-button>
                     </template>
@@ -520,37 +636,100 @@ onMounted(async () => {
                 </el-table>
               </el-card>
             </el-col>
-            <el-col :span="15">
-              <el-card shadow="never" class="section-card">
+
+            <el-col :span="10">
+              <el-card shadow="never" class="section-card designer-center-card">
                 <template #header>
                   <div class="card-header">
-                    <span>表单设计器</span>
+                    <div>
+                      <div class="section-title">表单设计器</div>
+                      <div class="section-subtitle">用基础信息、字段设计两个工作区组织配置内容</div>
+                    </div>
                     <div>
                       <el-button @click="resetFormEditor">新建</el-button>
                       <el-button type="primary" :loading="loading.savingForm" @click="saveForm">保存表单</el-button>
                     </div>
                   </div>
                 </template>
-                <el-form label-position="top">
-                  <el-row :gutter="16">
-                    <el-col :span="8">
-                      <el-form-item label="表单编码">
-                        <el-input v-model="formEditor.formCode" placeholder="如 ticket_apply" />
-                      </el-form-item>
-                    </el-col>
-                    <el-col :span="8">
-                      <el-form-item label="表单名称">
-                        <el-input v-model="formEditor.name" placeholder="请输入表单名称" />
-                      </el-form-item>
-                    </el-col>
-                    <el-col :span="8">
+
+                <el-tabs v-model="formEditorTab" class="pure-tabs">
+                  <el-tab-pane label="基础信息" name="meta">
+                    <el-form label-position="top">
+                      <el-row :gutter="16">
+                        <el-col :span="12">
+                          <el-form-item label="表单编码">
+                            <el-input v-model="formEditor.formCode" placeholder="如 ticket_apply" />
+                          </el-form-item>
+                        </el-col>
+                        <el-col :span="12">
+                          <el-form-item label="表单名称">
+                            <el-input v-model="formEditor.name" placeholder="请输入表单名称" />
+                          </el-form-item>
+                        </el-col>
+                      </el-row>
                       <el-form-item label="表单说明">
-                        <el-input v-model="formEditor.description" placeholder="请输入说明" />
+                        <el-input v-model="formEditor.description" type="textarea" :rows="4" placeholder="请输入表单用途说明" />
                       </el-form-item>
-                    </el-col>
-                  </el-row>
-                </el-form>
-                <FieldDesignerTable v-model="formEditor.fields" />
+                    </el-form>
+                    <div class="insight-grid">
+                      <div class="insight-card">
+                        <div class="insight-title">编码规范</div>
+                        <div class="insight-text">建议使用英文和下划线，方便节点及流程引用。</div>
+                      </div>
+                      <div class="insight-card">
+                        <div class="insight-title">字段策略</div>
+                        <div class="insight-text">优先把会参与流转和检索的字段设计为结构化输入。</div>
+                      </div>
+                    </div>
+                  </el-tab-pane>
+
+                  <el-tab-pane label="字段设计" name="fields">
+                    <FieldDesignerTable v-model="formEditor.fields" />
+                  </el-tab-pane>
+                </el-tabs>
+              </el-card>
+            </el-col>
+
+            <el-col :span="7">
+              <el-card shadow="never" class="section-card designer-preview-card">
+                <template #header>
+                  <div class="card-header">
+                    <div>
+                      <div class="section-title">实时预览</div>
+                      <div class="section-subtitle">接近 pure-admin 中右侧属性/预览面板的结构</div>
+                    </div>
+                    <el-icon class="preview-icon"><DataAnalysis /></el-icon>
+                  </div>
+                </template>
+
+                <el-descriptions :column="1" border class="compact-descriptions">
+                  <el-descriptions-item label="表单名称">{{ formEditor.name || '-' }}</el-descriptions-item>
+                  <el-descriptions-item label="表单编码">{{ formEditor.formCode || '-' }}</el-descriptions-item>
+                  <el-descriptions-item label="字段数量">{{ formSummary.fieldCount }}</el-descriptions-item>
+                  <el-descriptions-item label="下拉字段">{{ formSummary.selectCount }}</el-descriptions-item>
+                </el-descriptions>
+
+                <el-divider>字段清单</el-divider>
+                <div class="preview-chip-list" v-if="formEditor.fields.length">
+                  <div v-for="field in formEditor.fields" :key="field.key || field.label" class="preview-chip">
+                    <div class="preview-chip-main">
+                      <span class="preview-chip-label">{{ field.label || '未命名字段' }}</span>
+                      <el-tag size="small" effect="plain">{{ resolveFieldTypeLabel(field.type) }}</el-tag>
+                    </div>
+                    <div class="preview-chip-sub">
+                      <span>{{ field.key || '-' }}</span>
+                      <span v-if="field.required" class="required-dot">必填</span>
+                    </div>
+                  </div>
+                </div>
+                <el-empty v-else description="暂无字段配置" />
+
+                <el-divider>交互预览</el-divider>
+                <DynamicFormRenderer
+                  :schema="serializeFields(formEditor.fields)"
+                  :model-value="formPreviewData"
+                  @update:model-value="updateFormPreviewData"
+                />
               </el-card>
             </el-col>
           </el-row>
@@ -654,22 +833,48 @@ onMounted(async () => {
         </template>
 
         <template v-else-if="activeMenu === 'flows'">
+          <el-card shadow="never" class="page-intro-card">
+            <div class="page-intro">
+              <div>
+                <div class="page-intro-title">流程设计</div>
+                <div class="page-intro-desc">
+                  参考 vue-pure-admin 中“左目录 + 中设计区 + 右属性预览”的管理页结构，把流程编排拆成基础配置、流转画布和结构概览三部分。
+                </div>
+              </div>
+              <div class="stat-grid">
+                <div class="stat-item">
+                  <div class="stat-label">流程总数</div>
+                  <div class="stat-value">{{ flows.length }}</div>
+                </div>
+                <div class="stat-item">
+                  <div class="stat-label">已选节点</div>
+                  <div class="stat-value">{{ flowSummary.nodeCount }}</div>
+                </div>
+                <div class="stat-item">
+                  <div class="stat-label">流转关系</div>
+                  <div class="stat-value">{{ flowSummary.transitionCount }}</div>
+                </div>
+              </div>
+            </div>
+          </el-card>
+
           <el-row :gutter="16">
-            <el-col :span="10">
-              <el-card shadow="never" class="section-card">
+            <el-col :span="7">
+              <el-card shadow="never" class="section-card designer-side-card">
                 <template #header>
                   <div class="card-header">
-                    <span>流程列表</span>
+                    <span>流程目录</span>
                     <el-button link type="primary" @click="fetchFlows">刷新</el-button>
                   </div>
                 </template>
-                <el-table :data="flows" stripe>
-                  <el-table-column prop="flowCode" label="编码" min-width="120" />
+                <div class="catalog-tip">点击某个流程可将节点关系载入右侧编排视图。</div>
+                <el-table :data="flows" stripe height="640">
                   <el-table-column prop="name" label="流程名称" min-width="140" />
-                  <el-table-column label="节点数" width="80">
+                  <el-table-column prop="flowCode" label="编码" min-width="120" />
+                  <el-table-column label="节点数" width="76">
                     <template #default="{ row }">{{ row.nodes?.length || 0 }}</template>
                   </el-table-column>
-                  <el-table-column label="操作" width="70">
+                  <el-table-column label="操作" width="72">
                     <template #default="{ row }">
                       <el-button link type="primary" @click="editFlow(row)">编辑</el-button>
                     </template>
@@ -677,109 +882,215 @@ onMounted(async () => {
                 </el-table>
               </el-card>
             </el-col>
-            <el-col :span="14">
-              <el-card shadow="never" class="section-card">
+
+            <el-col :span="10">
+              <el-card shadow="never" class="section-card designer-center-card">
                 <template #header>
                   <div class="card-header">
-                    <span>流程编排</span>
+                    <div>
+                      <div class="section-title">流程编排工作区</div>
+                      <div class="section-subtitle">通过标签页切换基础配置与流转建模，符合 pure-admin 常见的页签式工作区</div>
+                    </div>
                     <div>
                       <el-button @click="resetFlowEditor">新建</el-button>
                       <el-button type="primary" :loading="loading.savingFlow" @click="saveFlow">保存流程</el-button>
                     </div>
                   </div>
                 </template>
-                <el-form label-position="top">
-                  <el-row :gutter="16">
-                    <el-col :span="8">
-                      <el-form-item label="流程编码">
-                        <el-input v-model="flowEditor.flowCode" placeholder="如 service_request" />
-                      </el-form-item>
-                    </el-col>
-                    <el-col :span="8">
-                      <el-form-item label="流程名称">
-                        <el-input v-model="flowEditor.name" placeholder="请输入流程名称" />
-                      </el-form-item>
-                    </el-col>
-                    <el-col :span="8">
+
+                <el-tabs v-model="flowEditorTab" class="pure-tabs">
+                  <el-tab-pane label="基础配置" name="meta">
+                    <el-form label-position="top">
+                      <el-row :gutter="16">
+                        <el-col :span="12">
+                          <el-form-item label="流程编码">
+                            <el-input v-model="flowEditor.flowCode" placeholder="如 service_request" />
+                          </el-form-item>
+                        </el-col>
+                        <el-col :span="12">
+                          <el-form-item label="流程名称">
+                            <el-input v-model="flowEditor.name" placeholder="请输入流程名称" />
+                          </el-form-item>
+                        </el-col>
+                      </el-row>
                       <el-form-item label="流程说明">
-                        <el-input v-model="flowEditor.description" placeholder="请输入流程说明" />
+                        <el-input v-model="flowEditor.description" type="textarea" :rows="4" placeholder="请输入流程说明" />
                       </el-form-item>
-                    </el-col>
-                  </el-row>
-                  <el-row :gutter="16">
-                    <el-col :span="12">
-                      <el-form-item label="流程节点">
-                        <el-select v-model="flowEditor.nodeIds" multiple filterable style="width: 100%">
-                          <el-option
-                            v-for="node in nodes"
-                            :key="node.id"
-                            :label="`${node.name} (${node.nodeState})`"
-                            :value="node.id"
-                          />
-                        </el-select>
-                      </el-form-item>
-                    </el-col>
-                    <el-col :span="12">
-                      <el-form-item label="开始节点">
-                        <el-select v-model="flowEditor.startNodeId" style="width: 100%">
-                          <el-option
-                            v-for="node in flowSelectedNodes.filter((item) => item.nodeState === 'START')"
-                            :key="node.id"
-                            :label="node.name"
-                            :value="node.id"
-                          />
-                        </el-select>
-                      </el-form-item>
-                    </el-col>
-                  </el-row>
-                </el-form>
+                      <el-row :gutter="16">
+                        <el-col :span="12">
+                          <el-form-item label="流程节点">
+                            <el-select v-model="flowEditor.nodeIds" multiple filterable style="width: 100%">
+                              <el-option
+                                v-for="node in nodes"
+                                :key="node.id"
+                                :label="`${node.name} (${resolveNodeStateLabel(node.nodeState)})`"
+                                :value="node.id"
+                              />
+                            </el-select>
+                          </el-form-item>
+                        </el-col>
+                        <el-col :span="12">
+                          <el-form-item label="开始节点">
+                            <el-select v-model="flowEditor.startNodeId" style="width: 100%">
+                              <el-option
+                                v-for="node in orderedFlowSelectedNodes.filter((item) => item.nodeState === 'START')"
+                                :key="node.id"
+                                :label="node.name"
+                                :value="node.id"
+                              />
+                            </el-select>
+                          </el-form-item>
+                        </el-col>
+                      </el-row>
+                    </el-form>
 
-                <el-alert
-                  type="info"
-                  :closable="false"
-                  show-icon
-                  description="流程管理通过节点和流转关系表达业务动作方向；非关闭节点至少需要一个 next 节点，关闭节点不再流转。"
-                />
+                    <div class="selected-node-grid">
+                      <div
+                        v-for="node in orderedFlowSelectedNodes"
+                        :key="node.id"
+                        class="selected-node-card"
+                      >
+                        <div class="selected-node-title">
+                          <span>{{ node.name }}</span>
+                          <el-tag :type="resolveNodeStateTagType(node.nodeState)" effect="light">
+                            {{ resolveNodeStateLabel(node.nodeState) }}
+                          </el-tag>
+                        </div>
+                        <div class="selected-node-meta">
+                          <span>执行动作：{{ resolveActionLabel(node.actionType) }}</span>
+                          <span>处理人：{{ node.assignee }}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </el-tab-pane>
 
-                <el-divider>流转关系</el-divider>
-                <div class="section-toolbar">
-                  <span>一个节点可配置多个 next 节点</span>
-                  <el-button type="primary" link @click="addTransition">新增流转</el-button>
+                  <el-tab-pane label="流转编排" name="graph">
+                    <el-alert
+                      type="info"
+                      :closable="false"
+                      show-icon
+                      description="流程由节点之间的 transition 组成；当一个节点有多个 next 时，会在运行时要求选择流转方向。"
+                    />
+
+                    <el-divider>流转关系</el-divider>
+                    <div class="section-toolbar">
+                      <span>用流转名称表达业务动作方向，如“提交审核”“处理完成”</span>
+                      <el-button type="primary" link @click="addTransition">新增流转</el-button>
+                    </div>
+
+                    <el-empty v-if="!flowEditor.transitions.length" description="暂无流转关系" />
+                    <div v-else class="transition-board">
+                      <div
+                        v-for="(transition, index) in flowEditor.transitions"
+                        :key="index"
+                        class="transition-card"
+                      >
+                        <div class="transition-order">{{ index + 1 }}</div>
+                        <div class="transition-content">
+                          <el-row :gutter="12">
+                            <el-col :span="7">
+                              <el-select v-model="transition.fromNodeId" style="width: 100%">
+                                <el-option
+                                  v-for="node in orderedFlowSelectedNodes"
+                                  :key="node.id"
+                                  :label="`${node.name} (${resolveNodeStateLabel(node.nodeState)})`"
+                                  :value="node.id"
+                                />
+                              </el-select>
+                            </el-col>
+                            <el-col :span="7">
+                              <el-select v-model="transition.toNodeId" style="width: 100%">
+                                <el-option
+                                  v-for="node in orderedFlowSelectedNodes"
+                                  :key="node.id"
+                                  :label="`${node.name} (${resolveNodeStateLabel(node.nodeState)})`"
+                                  :value="node.id"
+                                />
+                              </el-select>
+                            </el-col>
+                            <el-col :span="6">
+                              <el-input v-model="transition.transitionName" placeholder="流转名称，如 审核通过" />
+                            </el-col>
+                            <el-col :span="2">
+                              <el-input-number v-model="transition.sortNo" :min="0" style="width: 100%" />
+                            </el-col>
+                            <el-col :span="2" class="align-right">
+                              <el-button type="danger" link @click="removeTransition(index)">删除</el-button>
+                            </el-col>
+                          </el-row>
+                          <div class="transition-hint">
+                            {{ getNodeName(transition.fromNodeId) }} -> {{ getNodeName(transition.toNodeId) }}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </el-tab-pane>
+                </el-tabs>
+              </el-card>
+            </el-col>
+
+            <el-col :span="7">
+              <el-card shadow="never" class="section-card designer-preview-card">
+                <template #header>
+                  <div class="card-header">
+                    <div>
+                      <div class="section-title">结构概览</div>
+                      <div class="section-subtitle">右侧展示流程拓扑和约束检查提示，更接近 pure-admin 配置页的属性总览</div>
+                    </div>
+                    <el-icon class="preview-icon"><DataAnalysis /></el-icon>
+                  </div>
+                </template>
+
+                <el-descriptions :column="1" border class="compact-descriptions">
+                  <el-descriptions-item label="流程编码">{{ flowEditor.flowCode || '-' }}</el-descriptions-item>
+                  <el-descriptions-item label="开始节点">{{ flowStartNode?.name || '-' }}</el-descriptions-item>
+                  <el-descriptions-item label="关闭节点数">{{ flowSummary.closeCount }}</el-descriptions-item>
+                  <el-descriptions-item label="流转关系数">{{ flowSummary.transitionCount }}</el-descriptions-item>
+                </el-descriptions>
+
+                <el-divider>节点顺序预览</el-divider>
+                <div v-if="orderedFlowSelectedNodes.length" class="node-preview-stack">
+                  <div
+                    v-for="node in orderedFlowSelectedNodes"
+                    :key="node.id"
+                    class="node-preview-card"
+                  >
+                    <div class="node-preview-title">
+                      <span>{{ node.name }}</span>
+                      <el-tag size="small" :type="resolveNodeStateTagType(node.nodeState)" effect="light">
+                        {{ resolveNodeStateLabel(node.nodeState) }}
+                      </el-tag>
+                    </div>
+                    <div class="node-preview-meta">
+                      <span>表单 #{{ node.formId }}</span>
+                      <span>{{ resolveActionLabel(node.actionType) }}</span>
+                    </div>
+                    <div class="node-preview-routes" v-if="flowEditor.transitions.some((item) => item.fromNodeId === node.id)">
+                      <span class="route-label">Next:</span>
+                      <el-tag
+                        v-for="transition in flowEditor.transitions.filter((item) => item.fromNodeId === node.id)"
+                        :key="`${transition.fromNodeId}-${transition.toNodeId}-${transition.sortNo}`"
+                        size="small"
+                        effect="plain"
+                      >
+                        {{ getNodeName(transition.toNodeId) }}
+                      </el-tag>
+                    </div>
+                  </div>
                 </div>
-                <el-empty v-if="!flowEditor.transitions.length" description="暂无流转关系" />
-                <el-card v-for="(transition, index) in flowEditor.transitions" :key="index" shadow="never" class="field-card">
-                  <el-row :gutter="12">
-                    <el-col :span="7">
-                      <el-select v-model="transition.fromNodeId" style="width: 100%">
-                        <el-option
-                          v-for="node in flowSelectedNodes"
-                          :key="node.id"
-                          :label="`${node.name} (${node.nodeState})`"
-                          :value="node.id"
-                        />
-                      </el-select>
-                    </el-col>
-                    <el-col :span="7">
-                      <el-select v-model="transition.toNodeId" style="width: 100%">
-                        <el-option
-                          v-for="node in flowSelectedNodes"
-                          :key="node.id"
-                          :label="`${node.name} (${node.nodeState})`"
-                          :value="node.id"
-                        />
-                      </el-select>
-                    </el-col>
-                    <el-col :span="6">
-                      <el-input v-model="transition.transitionName" placeholder="流转名称，如 通过" />
-                    </el-col>
-                    <el-col :span="2">
-                      <el-input-number v-model="transition.sortNo" :min="0" style="width: 100%" />
-                    </el-col>
-                    <el-col :span="2" class="align-right">
-                      <el-button type="danger" link @click="removeTransition(index)">删除</el-button>
-                    </el-col>
-                  </el-row>
-                </el-card>
+                <el-empty v-else description="请选择流程节点" />
+
+                <el-divider>校验提示</el-divider>
+                <div class="insight-grid flow-insight-grid">
+                  <div class="insight-card">
+                    <div class="insight-title">开始节点</div>
+                    <div class="insight-text">开始节点必须是 START 类型，且只能存在一个。</div>
+                  </div>
+                  <div class="insight-card">
+                    <div class="insight-title">关闭节点</div>
+                    <div class="insight-text">至少需要一个 CLOSE 节点，且 CLOSE 节点不能继续配置 next。</div>
+                  </div>
+                </div>
               </el-card>
             </el-col>
           </el-row>
