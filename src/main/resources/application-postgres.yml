@@ -1,0 +1,10 @@
+spring:
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://localhost:5432/ticket_system
+    username: postgres
+    password: postgres
+
+logging:
+  level:
+    com.example.ticketsystem: info
