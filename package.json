@@ -1,12 +1,13 @@
 {
-  "name": "form-edit-studio",
+  "name": "support-ticket-portal",
   "private": true,
   "version": "0.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vue-tsc -b && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "backend:package": "cd backend && ./mvnw -q -DskipTests package"
   },
   "dependencies": {
     "@element-plus/icons-vue": "^2.3.2",
