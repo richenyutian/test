@@ -22,6 +22,10 @@ const menus = [
     description: '选择模板并完成填写提交',
   },
 ]
+
+const handleMenuSelect = (index: string) => {
+  router.push(index)
+}
 </script>
 
 <template>
@@ -35,7 +39,7 @@ const menus = [
       <el-menu
         class="side-menu"
         :default-active="activeMenu"
-        @select="(index) => router.push(index)"
+        @select="handleMenuSelect"
       >
         <el-menu-item
           v-for="menu in menus"
