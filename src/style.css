@@ -310,6 +310,52 @@ a {
   gap: 12px;
 }
 
+.rich-editor {
+  border: 1px solid var(--el-border-color);
+  border-radius: 12px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.rich-editor.disabled {
+  background: var(--el-fill-color-light);
+}
+
+.rich-editor__toolbar {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--el-border-color-lighter);
+  background: #f8fafc;
+}
+
+.rich-editor__body {
+  min-height: 180px;
+}
+
+.rich-editor__content {
+  min-height: 180px;
+  padding: 14px 16px;
+  line-height: 1.8;
+  outline: none;
+}
+
+.rich-editor__content.is-empty::before {
+  content: attr(data-placeholder);
+  color: #9ca3af;
+}
+
+.rich-editor__content p {
+  margin: 0 0 10px;
+}
+
+.remote-select__empty {
+  padding: 10px 12px;
+  color: #6b7280;
+  text-align: center;
+}
+
 @media (max-width: 1200px) {
   .content-grid,
   .fill-layout {

@@ -1,4 +1,12 @@
-export type FieldType = 'input' | 'textarea' | 'select' | 'number' | 'date' | 'switch'
+export type FieldType =
+  | 'input'
+  | 'textarea'
+  | 'select'
+  | 'remoteSelect'
+  | 'number'
+  | 'date'
+  | 'switch'
+  | 'richtext'
 
 export interface FieldOption {
   label: string
@@ -13,6 +21,15 @@ export interface FieldValidation {
   trigger?: 'blur' | 'change'
 }
 
+export interface RemoteSelectConfig {
+  url: string
+  method: 'GET' | 'POST'
+  labelKey: string
+  valueKey: string
+  keywordKey: string
+  resultPath: string
+}
+
 export interface FormField {
   id: string
   label: string
@@ -24,6 +41,7 @@ export interface FormField {
   helpText: string
   span: number
   options: FieldOption[]
+  remoteConfig?: RemoteSelectConfig
   validation: FieldValidation
 }
 

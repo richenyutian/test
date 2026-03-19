@@ -2,8 +2,19 @@
 import { ref } from 'vue'
 import type { FormInstance, FormRules } from 'element-plus'
 
+import RemoteSelect from './RemoteSelect.vue'
+import RichTextEditor from './RichTextEditor.vue'
 import type { FormTemplate } from '../types/form'
 import { getFieldSpan } from '../utils/form'
+
+const emptyRemoteConfig = {
+  url: '',
+  method: 'GET',
+  labelKey: 'label',
+  valueKey: 'value',
+  keywordKey: 'keyword',
+  resultPath: '',
+} as const
 
 const props = withDefaults(
   defineProps<{
@@ -31,6 +42,7 @@ const formRef = ref<FormInstance>()
 
 const validate = () => formRef.value?.validate()
 const resetFields = () => formRef.value?.resetFields()
+const validateField = (prop: string) => formRef.value?.validateField(prop)
 
 defineExpose({
   validate,
@@ -91,6 +103,16 @@ defineExpose({
             </el-select>
           </template>
 
+          <template v-else-if="field.type === 'remoteSelect'">
+            <RemoteSelect
+              v-model="model[field.prop]"
+              :config="field.remoteConfig || emptyRemoteConfig"
+              :disabled="disabled"
+              :placeholder="field.placeholder"
+              @update:model-value="validateField(field.prop)"
+            />
+          </template>
+
           <template v-else-if="field.type === 'number'">
             <el-input-number
               v-model="model[field.prop]"
@@ -119,6 +141,15 @@ defineExpose({
               inline-prompt
               active-text="是"
               inactive-text="否"
+            />
+          </template>
+
+          <template v-else-if="field.type === 'richtext'">
+            <RichTextEditor
+              v-model="model[field.prop]"
+              :disabled="disabled"
+              :placeholder="field.placeholder || '请输入富文本内容'"
+              @blur="validateField(field.prop)"
             />
           </template>
 

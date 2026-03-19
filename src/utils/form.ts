@@ -1,4 +1,4 @@
-import type { FormRules } from 'element-plus'
+import type { FormItemRule, FormRules } from 'element-plus'
 
 import type { FieldType, FormField, FormTemplate } from '../types/form'
 
@@ -33,6 +33,14 @@ export const createEmptyField = (): FormField => ({
   helpText: '',
   span: 24,
   options: [],
+  remoteConfig: {
+    url: '',
+    method: 'GET',
+    labelKey: 'label',
+    valueKey: 'value',
+    keywordKey: 'keyword',
+    resultPath: '',
+  },
   validation: {
     message: '',
     min: undefined,
@@ -70,27 +78,66 @@ export const createFormModel = (template: FormTemplate) =>
 
 export const createFormRules = (template: FormTemplate): FormRules =>
   template.fields.reduce<FormRules>((rules, field) => {
-    const fieldRules: Array<Record<string, unknown>> = []
+    const fieldRules: FormItemRule[] = []
 
     if (field.required) {
-      fieldRules.push({
-        required: true,
-        message: field.validation.message || `请填写${field.label}`,
-        trigger: field.type === 'select' || field.type === 'date' || field.type === 'switch'
-          ? 'change'
-          : field.validation.trigger || 'blur',
-      })
+      if (field.type === 'richtext') {
+        fieldRules.push({
+          validator: (_rule, value, callback) => {
+            if (!getRichTextLength(String(value || ''))) {
+              callback(new Error(field.validation.message || `请填写${field.label}`))
+              return
+            }
+
+            callback()
+          },
+          trigger: 'blur',
+        })
+      } else {
+        fieldRules.push({
+          required: true,
+          message: field.validation.message || `请填写${field.label}`,
+          trigger: getRuleTrigger(field.type, field.validation.trigger),
+        })
+      }
     }
 
     if (typeof field.validation.min === 'number' || typeof field.validation.max === 'number') {
-      fieldRules.push({
-        min: field.validation.min,
-        max: field.validation.max,
-        message:
-          field.validation.message ||
-          buildLengthMessage(field),
-        trigger: field.validation.trigger || 'blur',
-      })
+      if (field.type === 'richtext') {
+        fieldRules.push({
+          validator: (_rule, value, callback) => {
+            const textLength = getRichTextLength(String(value || ''))
+
+            if (
+              typeof field.validation.min === 'number' &&
+              textLength < field.validation.min
+            ) {
+              callback(new Error(field.validation.message || buildLengthMessage(field)))
+              return
+            }
+
+            if (
+              typeof field.validation.max === 'number' &&
+              textLength > field.validation.max
+            ) {
+              callback(new Error(field.validation.message || buildLengthMessage(field)))
+              return
+            }
+
+            callback()
+          },
+          trigger: 'blur',
+        })
+      } else {
+        fieldRules.push({
+          min: field.validation.min,
+          max: field.validation.max,
+          message:
+            field.validation.message ||
+            buildLengthMessage(field),
+          trigger: field.validation.trigger || 'blur',
+        })
+      }
     }
 
     if (field.validation.pattern) {
@@ -98,7 +145,7 @@ export const createFormRules = (template: FormTemplate): FormRules =>
         fieldRules.push({
           pattern: new RegExp(field.validation.pattern),
           message: field.validation.message || `${field.label}格式不正确`,
-          trigger: field.validation.trigger || 'blur',
+          trigger: getRuleTrigger(field.type, field.validation.trigger),
         })
       } catch {
         // 忽略非法正则，避免设计中的临时输入影响整页渲染。
@@ -133,3 +180,25 @@ const buildLengthMessage = (field: FormField) => {
 
   return `请检查${field.label}`
 }
+
+const getRuleTrigger = (
+  type: FieldType,
+  trigger?: 'blur' | 'change',
+): 'blur' | 'change' => {
+  if (
+    type === 'select' ||
+    type === 'remoteSelect' ||
+    type === 'date' ||
+    type === 'switch'
+  ) {
+    return 'change'
+  }
+
+  return trigger || 'blur'
+}
+
+const getRichTextLength = (value: string) =>
+  value
+    .replace(/<[^>]+>/g, '')
+    .replace(/&nbsp;/g, ' ')
+    .trim().length

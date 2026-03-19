@@ -39,10 +39,24 @@ const fieldTypeOptions = [
   { label: '单行输入框', value: 'input' },
   { label: '多行输入框', value: 'textarea' },
   { label: '下拉选择', value: 'select' },
+  { label: '远程下拉', value: 'remoteSelect' },
   { label: '数字输入', value: 'number' },
   { label: '日期选择', value: 'date' },
   { label: '开关', value: 'switch' },
+  { label: '富文本', value: 'richtext' },
 ]
+
+const fieldTypeLabelMap = Object.fromEntries(
+  fieldTypeOptions.map((item) => [item.value, item.label]),
+)
+const createDefaultRemoteConfig = () => ({
+  url: '',
+  method: 'GET' as const,
+  labelKey: 'label',
+  valueKey: 'value',
+  keywordKey: 'keyword',
+  resultPath: '',
+})
 
 const clone = <T,>(value: T): T => JSON.parse(JSON.stringify(value)) as T
 
@@ -68,6 +82,16 @@ const switchDefaultValue = computed({
   set: (value: boolean) => {
     fieldDraft.defaultValue = value
   },
+})
+
+const isSelectField = computed(() => fieldDraft.type === 'select')
+const isRemoteSelectField = computed(() => fieldDraft.type === 'remoteSelect')
+const remoteConfigDraft = computed(() => {
+  if (!fieldDraft.remoteConfig) {
+    fieldDraft.remoteConfig = createDefaultRemoteConfig()
+  }
+
+  return fieldDraft.remoteConfig
 })
 
 const stats = computed(() => [
@@ -142,9 +166,11 @@ const handleFieldTypeChange = () => {
     fieldDraft.options = []
   }
 
-  if (fieldDraft.type === 'switch') {
-    fieldDraft.validation.trigger = 'change'
-  } else if (fieldDraft.type === 'select' || fieldDraft.type === 'date') {
+  if (fieldDraft.type !== 'remoteSelect') {
+    fieldDraft.remoteConfig = createDefaultRemoteConfig()
+  }
+
+  if (fieldDraft.type === 'switch' || fieldDraft.type === 'select' || fieldDraft.type === 'date' || fieldDraft.type === 'remoteSelect') {
     fieldDraft.validation.trigger = 'change'
   } else {
     fieldDraft.validation.trigger = 'blur'
@@ -193,6 +219,19 @@ const saveField = async () => {
     }
 
     fieldDraft.options = validOptions as FieldOption[]
+  }
+
+  if (fieldDraft.type === 'remoteSelect') {
+    const remoteConfig = remoteConfigDraft.value
+
+    if (
+      !remoteConfig.url.trim() ||
+      !remoteConfig.labelKey.trim() ||
+      !remoteConfig.valueKey.trim()
+    ) {
+      ElMessage.warning('请完善远程下拉的接口地址和字段映射')
+      return
+    }
   }
 
   const nextField = clone(fieldDraft)
@@ -460,7 +499,11 @@ const deleteTemplate = async (template: FormTemplate) => {
               <el-table :data="editingTemplate.fields" border>
                 <el-table-column prop="label" label="字段名称" min-width="140" />
                 <el-table-column prop="prop" label="字段标识" min-width="140" />
-                <el-table-column prop="type" label="类型" width="120" />
+                <el-table-column label="类型" width="120">
+                  <template #default="{ row }">
+                    {{ fieldTypeLabelMap[row.type] || row.type }}
+                  </template>
+                </el-table-column>
                 <el-table-column label="必填" width="90">
                   <template #default="{ row }">
                     <el-tag :type="row.required ? 'danger' : 'info'">
@@ -667,7 +710,9 @@ const deleteTemplate = async (template: FormTemplate) => {
               <el-input
                 v-else
                 v-model="fieldDraft.defaultValue"
-                placeholder="请输入默认值"
+                :type="fieldDraft.type === 'richtext' ? 'textarea' : 'text'"
+                :rows="fieldDraft.type === 'richtext' ? 4 : undefined"
+                :placeholder="fieldDraft.type === 'richtext' ? '请输入默认 HTML 内容' : '请输入默认值'"
               />
             </el-form-item>
           </el-col>
@@ -708,7 +753,7 @@ const deleteTemplate = async (template: FormTemplate) => {
               />
             </el-form-item>
           </el-col>
-          <el-col v-if="fieldDraft.type === 'select'" :span="24">
+          <el-col v-if="isSelectField" :span="24">
             <el-divider content-position="left">下拉选项</el-divider>
 
             <div class="record-list">
@@ -734,6 +779,73 @@ const deleteTemplate = async (template: FormTemplate) => {
             </div>
 
             <el-button style="margin-top: 12px" @click="addOption">新增选项</el-button>
+          </el-col>
+
+          <el-col v-if="isRemoteSelectField" :span="24">
+            <el-divider content-position="left">远程下拉配置</el-divider>
+
+            <el-row :gutter="16">
+              <el-col :span="16">
+                <el-form-item label="接口地址">
+                  <el-input
+                    v-model="remoteConfigDraft.url"
+                    placeholder="如：/reviewers.json"
+                  />
+                </el-form-item>
+              </el-col>
+              <el-col :span="8">
+                <el-form-item label="请求方式">
+                  <el-select v-model="remoteConfigDraft.method" style="width: 100%">
+                    <el-option label="GET" value="GET" />
+                    <el-option label="POST" value="POST" />
+                  </el-select>
+                </el-form-item>
+              </el-col>
+              <el-col :span="8">
+                <el-form-item label="结果数组路径">
+                  <el-input
+                    v-model="remoteConfigDraft.resultPath"
+                    placeholder="如：data.items"
+                  />
+                </el-form-item>
+              </el-col>
+              <el-col :span="8">
+                <el-form-item label="显示字段">
+                  <el-input
+                    v-model="remoteConfigDraft.labelKey"
+                    placeholder="如：name"
+                  />
+                </el-form-item>
+              </el-col>
+              <el-col :span="8">
+                <el-form-item label="值字段">
+                  <el-input
+                    v-model="remoteConfigDraft.valueKey"
+                    placeholder="如：id"
+                  />
+                </el-form-item>
+              </el-col>
+              <el-col :span="8">
+                <el-form-item label="关键字参数名">
+                  <el-input
+                    v-model="remoteConfigDraft.keywordKey"
+                    placeholder="如：keyword"
+                  />
+                </el-form-item>
+              </el-col>
+              <el-col :span="24">
+                <div class="field-help">
+                  远程下拉会在打开面板和输入搜索词时请求接口，并按照“结果数组路径 / 显示字段 / 值字段”映射选项。
+                </div>
+              </el-col>
+            </el-row>
+          </el-col>
+
+          <el-col v-if="fieldDraft.type === 'richtext'" :span="24">
+            <el-divider content-position="left">富文本说明</el-divider>
+            <div class="field-help">
+              富文本字段保存为 HTML 字符串，支持基础格式化、列表和链接；长度校验会按纯文本长度计算。
+            </div>
           </el-col>
         </el-row>
       </el-form>
