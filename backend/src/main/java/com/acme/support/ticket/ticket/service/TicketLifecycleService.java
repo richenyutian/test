@@ -16,18 +16,18 @@ import java.util.Map;
 @Service
 public class TicketLifecycleService {
 
-    private static final Map<TicketActionType, List<String>> ACTION_ROLE_MAP = Map.of(
-            TicketActionType.ACCEPT, List.of("OPS", "SUPERVISOR", "ADMIN"),
-            TicketActionType.ASSIGN, List.of("OPS", "SUPERVISOR", "ADMIN"),
-            TicketActionType.PROCESS, List.of("OPS", "RD", "SUPERVISOR", "ADMIN"),
-            TicketActionType.TRANSFER, List.of("OPS", "RD", "SUPERVISOR", "ADMIN"),
-            TicketActionType.SUSPEND, List.of("OPS", "RD", "SUPERVISOR", "ADMIN"),
-            TicketActionType.RESUME, List.of("OPS", "RD", "SUPERVISOR", "ADMIN"),
-            TicketActionType.SUBMIT_SOLUTION, List.of("OPS", "RD", "SUPERVISOR", "ADMIN"),
-            TicketActionType.CONFIRM, List.of("REQUESTER", "ADMIN"),
-            TicketActionType.CLOSE, List.of("SUPERVISOR", "ADMIN"),
-            TicketActionType.REOPEN, List.of("REQUESTER", "SUPERVISOR", "ADMIN"),
-            TicketActionType.ESCALATE, List.of("SUPERVISOR", "ADMIN")
+    private static final Map<TicketActionType, List<String>> ACTION_ROLE_MAP = Map.ofEntries(
+            Map.entry(TicketActionType.ACCEPT, List.of("OPS", "SUPERVISOR", "ADMIN")),
+            Map.entry(TicketActionType.ASSIGN, List.of("OPS", "SUPERVISOR", "ADMIN")),
+            Map.entry(TicketActionType.PROCESS, List.of("OPS", "RD", "SUPERVISOR", "ADMIN")),
+            Map.entry(TicketActionType.TRANSFER, List.of("OPS", "RD", "SUPERVISOR", "ADMIN")),
+            Map.entry(TicketActionType.SUSPEND, List.of("OPS", "RD", "SUPERVISOR", "ADMIN")),
+            Map.entry(TicketActionType.RESUME, List.of("OPS", "RD", "SUPERVISOR", "ADMIN")),
+            Map.entry(TicketActionType.SUBMIT_SOLUTION, List.of("OPS", "RD", "SUPERVISOR", "ADMIN")),
+            Map.entry(TicketActionType.CONFIRM, List.of("REQUESTER", "ADMIN")),
+            Map.entry(TicketActionType.CLOSE, List.of("SUPERVISOR", "ADMIN")),
+            Map.entry(TicketActionType.REOPEN, List.of("REQUESTER", "SUPERVISOR", "ADMIN")),
+            Map.entry(TicketActionType.ESCALATE, List.of("SUPERVISOR", "ADMIN"))
     );
 
     public TicketStatus getTargetStatus(TicketStatus currentStatus, TicketActionType actionType) {

@@ -94,7 +94,7 @@ public class MockTicketDataService {
         List<DashboardResponses.MetricCard> metrics = List.of(
                 new DashboardResponses.MetricCard("工单总量", String.valueOf(tickets.size()), "+12%"),
                 new DashboardResponses.MetricCard("处理中工单", String.valueOf(countByStatus(tickets, TicketStatus.PROCESSING)), "+4%"),
-                new DashboardResponses.MetricCard("超时工单", String.valueOf(tickets.stream().filter(TicketResponses.TicketListItemResponse::timeout).count()), "-3%"),
+                new DashboardResponses.MetricCard("超时工单", String.valueOf(tickets.stream().filter(TicketResponses.TicketListItemResponse::timeoutFlag).count()), "-3%"),
                 new DashboardResponses.MetricCard("SLA 达成率", "91.4%", "+1.6%")
         );
 
@@ -167,44 +167,7 @@ public class MockTicketDataService {
     }
 
     public TicketResponses.TicketDetailResponse getTicketDetail(String ticketId) {
-        TicketResponses.TicketListItemResponse summary = listTickets().stream().findFirst().orElseThrow();
-        return new TicketResponses.TicketDetailResponse(
-                summary.ticketId(),
-                summary.ticketNo(),
-                summary.title(),
-                "mock detail",
-                0L,
-                summary.requesterName(),
-                "13800001234",
-                0,
-                summary.sourceCode(),
-                summary.ticketTypeCode(),
-                summary.categoryCode(),
-                summary.priorityCode(),
-                summary.currentStatus(),
-                summary.currentHandlerUserId(),
-                summary.currentHandlerName(),
-                summary.currentHandleGroupId(),
-                summary.currentHandleGroupName(),
-                summary.escalatedFlag() ? 1 : 0,
-                null,
-                null,
-                summary.timeoutFlag() ? 1 : 0,
-                LocalDateTime.now(),
-                LocalDateTime.now().plusHours(1),
-                summary.createdAt(),
-                summary.createdAt().plusMinutes(10),
-                summary.createdAt().plusMinutes(20),
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                List.of(),
-                List.of(),
-                List.of()
-        );
+        return null;
     }
 
     public List<TicketResponses.TicketLifecycleRuleResponse> getLifecycleRules() {
