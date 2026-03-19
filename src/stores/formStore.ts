@@ -2,10 +2,11 @@ import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
 
 import { defaultTemplates } from '../mock/defaultForms'
-import type { FormSubmission, FormTemplate } from '../types/form'
+import type { FormField, FormSubmission, FormTemplate } from '../types/form'
 
 const TEMPLATE_KEY = 'form-edit-studio/templates'
 const SUBMISSION_KEY = 'form-edit-studio/submissions'
+const LEGACY_REMOTE_URLS = new Set(['/mock-api/reviewers.json', '/reviewers.json'])
 
 const clone = <T>(value: T): T => JSON.parse(JSON.stringify(value)) as T
 
@@ -28,9 +29,10 @@ const loadStorage = <T>(key: string, fallback: T) => {
 }
 
 export const useFormStore = defineStore('form-store', () => {
-  const templates = ref<FormTemplate[]>(
+  const initialTemplates = migrateTemplates(
     loadStorage<FormTemplate[]>(TEMPLATE_KEY, defaultTemplates),
   )
+  const templates = ref<FormTemplate[]>(initialTemplates)
   const submissions = ref<FormSubmission[]>(
     loadStorage<FormSubmission[]>(SUBMISSION_KEY, []),
   )
@@ -129,3 +131,35 @@ export const useFormStore = defineStore('form-store', () => {
     submitForm,
   }
 })
+
+function migrateTemplates(templates: FormTemplate[]) {
+  return templates.map((template) => ({
+    ...template,
+    fields: template.fields.map(migrateField),
+  }))
+}
+
+function migrateField(field: FormField): FormField {
+  if (field.type !== 'remoteSelect') {
+    return field
+  }
+
+  const remoteConfig = {
+    url: 'reviewers.json',
+    method: 'GET' as const,
+    labelKey: 'label',
+    valueKey: 'value',
+    keywordKey: 'keyword',
+    resultPath: '',
+    ...field.remoteConfig,
+  }
+
+  if (LEGACY_REMOTE_URLS.has(remoteConfig.url)) {
+    remoteConfig.url = 'reviewers.json'
+  }
+
+  return {
+    ...field,
+    remoteConfig,
+  }
+}

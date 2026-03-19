@@ -789,7 +789,7 @@ const deleteTemplate = async (template: FormTemplate) => {
                 <el-form-item label="接口地址">
                   <el-input
                     v-model="remoteConfigDraft.url"
-                    placeholder="如：/reviewers.json"
+                    placeholder="如：reviewers.json"
                   />
                 </el-form-item>
               </el-col>

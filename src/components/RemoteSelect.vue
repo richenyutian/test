@@ -67,13 +67,14 @@ const loadOptions = async (keyword = '') => {
   errorMessage.value = ''
 
   try {
-    const response = await fetch(buildRequestUrl(keyword), buildRequestInit(keyword))
+    const requestUrl = buildRequestUrl(keyword)
+    const response = await fetch(requestUrl, buildRequestInit(keyword))
 
     if (!response.ok) {
       throw new Error(`接口请求失败：${response.status}`)
     }
 
-    const data = (await response.json()) as Record<string, any>
+    const data = await parseResponse(response, requestUrl)
     const list = resolveDataList(data, props.config.resultPath)
 
     if (!Array.isArray(list)) {
@@ -101,21 +102,19 @@ const loadOptions = async (keyword = '') => {
 }
 
 const buildRequestUrl = (keyword: string) => {
+  const normalizedUrl = normalizeRequestUrl(props.config.url)
+
   if (props.config.method === 'POST') {
-    return props.config.url
+    return normalizedUrl
   }
 
-  const url = new URL(props.config.url, window.location.origin)
+  const url = new URL(normalizedUrl)
 
   if (keyword && props.config.keywordKey) {
     url.searchParams.set(props.config.keywordKey, keyword)
   }
 
-  if (props.config.url.startsWith('http://') || props.config.url.startsWith('https://')) {
-    return url.toString()
-  }
-
-  return `${url.pathname}${url.search}`
+  return url.toString()
 }
 
 const buildRequestInit = (keyword: string) => {
@@ -148,6 +147,40 @@ const resolveDataList = (payload: Record<string, any>, path: string) => {
 
 const resolveValue = (payload: Record<string, any>, path: string) =>
   path.split('.').reduce<any>((result, segment) => result?.[segment], payload)
+
+const normalizeRequestUrl = (rawUrl: string) => {
+  if (/^https?:\/\//.test(rawUrl)) {
+    return rawUrl
+  }
+
+  if (rawUrl.startsWith('/')) {
+    return new URL(rawUrl, window.location.origin).toString()
+  }
+
+  return new URL(rawUrl, window.location.href).toString()
+}
+
+const parseResponse = async (response: Response, requestUrl: string) => {
+  const contentType = response.headers.get('content-type') || ''
+
+  if (contentType.includes('application/json')) {
+    return (await response.json()) as Record<string, any>
+  }
+
+  const text = await response.text()
+
+  if (text.trim().startsWith('<!doctype') || text.trim().startsWith('<html')) {
+    throw new Error(
+      `接口返回了 HTML 页面，请检查远程地址是否正确：${requestUrl}`,
+    )
+  }
+
+  try {
+    return JSON.parse(text) as Record<string, any>
+  } catch {
+    throw new Error(`接口返回的不是 JSON 数据：${requestUrl}`)
+  }
+}
 </script>
 
 <template>

@@ -169,7 +169,7 @@ export const defaultTemplates: FormTemplate[] = [
         span: 24,
         options: [],
         remoteConfig: {
-          url: '/reviewers.json',
+          url: 'reviewers.json',
           method: 'GET',
           labelKey: 'name',
           valueKey: 'id',
