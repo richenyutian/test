@@ -50,6 +50,12 @@ onMounted(() => {
   void loadOptions()
 })
 
+const handleVisibleChange = (visible: boolean) => {
+  if (visible) {
+    void loadOptions()
+  }
+}
+
 const loadOptions = async (keyword = '') => {
   if (!hasConfig.value) {
     options.value = []
@@ -156,7 +162,7 @@ const resolveValue = (payload: Record<string, any>, path: string) =>
     style="width: 100%"
     :remote-method="loadOptions"
     @update:model-value="emit('update:modelValue', $event)"
-    @visible-change="(visible) => visible && loadOptions()"
+    @visible-change="handleVisibleChange"
   >
     <el-option
       v-for="option in options"
