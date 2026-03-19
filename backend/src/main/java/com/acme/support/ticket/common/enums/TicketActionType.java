@@ -8,6 +8,7 @@ public enum TicketActionType {
     COLLABORATE,
     PROCESS,
     SUBMIT_SOLUTION,
+    CONFIRM,
     URGE,
     ESCALATE,
     SUSPEND,

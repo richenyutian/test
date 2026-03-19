@@ -1,5 +1,6 @@
 package com.acme.support.ticket.system.controller;
 
+import com.acme.support.ticket.audit.annotation.AuditLog;
 import com.acme.support.ticket.common.api.ApiResponse;
 import com.acme.support.ticket.system.dto.SystemManageRequests;
 import com.acme.support.ticket.system.dto.SystemManageResponses;
@@ -42,6 +43,7 @@ public class SystemRoleController {
     @Operation(summary = "新增角色")
     @PostMapping
     @PreAuthorize("hasAuthority('sys:role:create')")
+    @AuditLog(module = "系统管理", operation = "新增角色")
     public ApiResponse<Long> createRole(@Valid @RequestBody SystemManageRequests.RoleSaveRequest request) {
         return ApiResponse.success("新增成功", systemRoleService.createRole(request));
     }
@@ -49,6 +51,7 @@ public class SystemRoleController {
     @Operation(summary = "修改角色")
     @PutMapping("/{roleId}")
     @PreAuthorize("hasAuthority('sys:role:update')")
+    @AuditLog(module = "系统管理", operation = "修改角色")
     public ApiResponse<Void> updateRole(
             @PathVariable Long roleId,
             @Valid @RequestBody SystemManageRequests.RoleSaveRequest request

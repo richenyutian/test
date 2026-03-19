@@ -14,15 +14,16 @@ import java.time.LocalDateTime;
 @TableName("ticket_flow_record")
 public class TicketFlowRecordEntity {
 
-    @TableId(type = IdType.ASSIGN_UUID)
-    private String recordId;
-    private String ticketId;
-    private String actionType;
-    private String operatorId;
-    private String operatorName;
+    @TableId(type = IdType.AUTO)
+    private Long flowRecordId;
+    private Long ticketId;
+    private String actionCode;
     private String fromStatus;
     private String toStatus;
-    private String remark;
-    private LocalDateTime operatedAt;
-    private Integer deleted;
+    private Long operatorUserId;
+    private String operatorName;
+    private String operateDescription;
+    private LocalDateTime operateTime;
+    private String requestPath;
+    private Integer deletedFlag;
 }

@@ -12,6 +12,7 @@ import com.acme.support.ticket.system.mapper.SysUserMapper;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * 认证授权聚合服务，负责加载用户、角色、菜单与权限信息。
@@ -57,5 +58,17 @@ public class AuthorizationService {
 
     public List<HandleGroupMemberEntity> listGroupMembers(Long userId) {
         return handleGroupMemberMapper.findByUserId(userId);
+    }
+
+    public List<SysUserEntity> listUsersByRoleCodes(List<String> roleCodes) {
+        if (roleCodes == null || roleCodes.isEmpty()) {
+            return List.of();
+        }
+
+        String sqlLiteral = roleCodes.stream()
+                .map(code -> "'" + code + "'")
+                .collect(Collectors.joining(","));
+
+        return sysUserMapper.findUsersByRoleCodes(sqlLiteral);
     }
 }

@@ -1,5 +1,6 @@
 package com.acme.support.ticket.system.controller;
 
+import com.acme.support.ticket.audit.annotation.AuditLog;
 import com.acme.support.ticket.common.api.ApiResponse;
 import com.acme.support.ticket.system.dto.SystemManageRequests;
 import com.acme.support.ticket.system.dto.SystemManageResponses;
@@ -48,6 +49,7 @@ public class SystemMenuController {
     @Operation(summary = "新增菜单")
     @PostMapping
     @PreAuthorize("hasAuthority('sys:menu:create')")
+    @AuditLog(module = "系统管理", operation = "新增菜单")
     public ApiResponse<Long> createMenu(@Valid @RequestBody SystemManageRequests.MenuSaveRequest request) {
         return ApiResponse.success("新增成功", systemMenuService.createMenu(request));
     }
@@ -55,6 +57,7 @@ public class SystemMenuController {
     @Operation(summary = "修改菜单")
     @PutMapping("/{menuId}")
     @PreAuthorize("hasAuthority('sys:menu:update')")
+    @AuditLog(module = "系统管理", operation = "修改菜单")
     public ApiResponse<Void> updateMenu(
             @PathVariable Long menuId,
             @Valid @RequestBody SystemManageRequests.MenuSaveRequest request

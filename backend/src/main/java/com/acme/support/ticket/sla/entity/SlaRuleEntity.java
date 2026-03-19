@@ -5,23 +5,23 @@ import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
+import java.time.LocalDateTime;
+
 /**
  * SLA 规则实体。
  */
 @Data
-@TableName("sla_rule")
+@TableName("ticket_sla_rule")
 public class SlaRuleEntity {
 
-    @TableId(type = IdType.ASSIGN_UUID)
-    private String ruleId;
-    private String ruleCode;
-    private String ruleName;
-    private String categoryCode;
-    private String categoryName;
-    private Integer responseMinutes;
-    private Integer resolveMinutes;
-    private Integer responseWarningMinutes;
-    private Integer resolveWarningMinutes;
-    private Boolean autoEscalate;
-    private Integer deleted;
+    @TableId(type = IdType.AUTO)
+    private Long slaRuleId;
+    private String priorityCode;
+    private Integer responseLimitMinutes;
+    private Integer resolveLimitMinutes;
+    private Integer enabledFlag;
+    private String remark;
+    private Integer deletedFlag;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 }

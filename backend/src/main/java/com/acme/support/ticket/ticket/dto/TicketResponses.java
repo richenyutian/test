@@ -9,73 +9,85 @@ public final class TicketResponses {
     }
 
     public record TicketListItemResponse(
-            String ticketId,
+            Long ticketId,
             String ticketNo,
             String title,
             String requesterName,
-            String source,
-            String ticketType,
-            String categoryName,
-            String priority,
-            String urgencyLevel,
-            String status,
-            String currentAssigneeName,
-            String currentGroupName,
-            boolean escalated,
-            boolean timeout,
+            String sourceCode,
+            String ticketTypeCode,
+            String categoryCode,
+            String priorityCode,
+            String currentStatus,
+            Long currentHandlerUserId,
+            String currentHandlerName,
+            Long currentHandleGroupId,
+            String currentHandleGroupName,
+            boolean escalatedFlag,
+            boolean timeoutFlag,
             LocalDateTime createdAt,
             LocalDateTime updatedAt
     ) {
     }
 
     public record TicketFlowRecordResponse(
-            String actionType,
+            Long flowRecordId,
+            String actionCode,
             String operatorName,
             String fromStatus,
             String toStatus,
-            String remark,
-            LocalDateTime operatedAt
+            String operateDescription,
+            LocalDateTime operateTime
     ) {
     }
 
-    public record TicketCommentResponse(
-            String commentId,
-            String authorName,
-            String authorRole,
-            String content,
+    public record TicketAttachmentResponse(
+            Long attachmentId,
+            String originalFileName,
+            String storageFileName,
+            String fileExtension,
+            Long fileSize,
+            String uploaderName,
             LocalDateTime createdAt
     ) {
     }
 
     public record TicketDetailResponse(
-            String ticketId,
+            Long ticketId,
             String ticketNo,
             String title,
             String description,
+            Long requesterUserId,
             String requesterName,
             String contactPhone,
-            String customerName,
-            String departmentName,
-            String source,
-            String ticketType,
-            String categoryName,
-            String priority,
-            String urgencyLevel,
-            String status,
-            String currentAssigneeName,
-            String currentGroupName,
+            Integer externalUserFlag,
+            String sourceCode,
+            String ticketTypeCode,
+            String categoryCode,
+            String priorityCode,
+            String currentStatus,
+            Long currentHandlerUserId,
+            String currentHandlerName,
+            Long currentHandleGroupId,
+            String currentHandleGroupName,
+            Integer escalatedFlag,
+            String escalateReason,
+            LocalDateTime escalateTime,
+            Integer timeoutFlag,
             LocalDateTime responseDeadline,
             LocalDateTime resolveDeadline,
             LocalDateTime createdAt,
             LocalDateTime acceptedAt,
             LocalDateTime assignedAt,
-            LocalDateTime completedAt,
+            LocalDateTime processedAt,
+            LocalDateTime userConfirmedAt,
             LocalDateTime closedAt,
-            String satisfactionLevel,
-            String satisfactionComment,
-            List<String> tags,
+            String suspendReason,
+            String closeReason,
+            String reopenReason,
+            String resolutionSummary,
+            List<TicketAttachmentResponse> attachments,
             List<TicketFlowRecordResponse> flowRecords,
-            List<TicketCommentResponse> comments
+            List<String> allowedActions
     ) {
     }
 

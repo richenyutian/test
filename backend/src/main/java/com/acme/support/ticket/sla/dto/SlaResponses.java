@@ -8,18 +8,17 @@ public final class SlaResponses {
     }
 
     public record SlaRuleResponse(
-            String ruleCode,
-            String ruleName,
-            String categoryName,
-            int responseMinutes,
-            int resolveMinutes,
-            int responseWarningMinutes,
-            int resolveWarningMinutes,
-            boolean autoEscalate
+            Long slaRuleId,
+            String priorityCode,
+            int responseLimitMinutes,
+            int resolveLimitMinutes,
+            int enabledFlag,
+            String remark
     ) {
     }
 
     public record SlaAlertResponse(
+            Long ticketId,
             String ticketNo,
             String title,
             String alertType,
@@ -32,6 +31,13 @@ public final class SlaResponses {
     public record SlaOverviewResponse(
             List<SlaRuleResponse> rules,
             List<SlaAlertResponse> alerts
+    ) {
+    }
+
+    public record SlaScanResultResponse(
+            int responseTimeoutCount,
+            int resolveTimeoutCount,
+            int noticeCount
     ) {
     }
 }

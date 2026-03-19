@@ -1,5 +1,6 @@
 package com.acme.support.ticket.system.controller;
 
+import com.acme.support.ticket.audit.annotation.AuditLog;
 import com.acme.support.ticket.common.api.ApiResponse;
 import com.acme.support.ticket.system.dto.SystemManageRequests;
 import com.acme.support.ticket.system.dto.SystemManageResponses;
@@ -42,6 +43,7 @@ public class HandleGroupController {
     @Operation(summary = "新增处理组")
     @PostMapping
     @PreAuthorize("hasAuthority('sys:group:create')")
+    @AuditLog(module = "系统管理", operation = "新增处理组")
     public ApiResponse<Long> createGroup(@Valid @RequestBody SystemManageRequests.HandleGroupSaveRequest request) {
         return ApiResponse.success("新增成功", handleGroupService.createGroup(request));
     }
@@ -49,6 +51,7 @@ public class HandleGroupController {
     @Operation(summary = "修改处理组")
     @PutMapping("/{handleGroupId}")
     @PreAuthorize("hasAuthority('sys:group:update')")
+    @AuditLog(module = "系统管理", operation = "修改处理组")
     public ApiResponse<Void> updateGroup(
             @PathVariable Long handleGroupId,
             @Valid @RequestBody SystemManageRequests.HandleGroupSaveRequest request

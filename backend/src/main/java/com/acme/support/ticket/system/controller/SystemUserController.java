@@ -1,5 +1,6 @@
 package com.acme.support.ticket.system.controller;
 
+import com.acme.support.ticket.audit.annotation.AuditLog;
 import com.acme.support.ticket.common.api.ApiResponse;
 import com.acme.support.ticket.common.api.PageResponse;
 import com.acme.support.ticket.system.dto.SystemManageRequests;
@@ -48,6 +49,7 @@ public class SystemUserController {
     @Operation(summary = "新增用户")
     @PostMapping
     @PreAuthorize("hasAuthority('sys:user:create')")
+    @AuditLog(module = "系统管理", operation = "新增用户")
     public ApiResponse<Long> createUser(@Valid @RequestBody SystemManageRequests.UserSaveRequest request) {
         return ApiResponse.success("新增成功", systemUserService.createUser(request));
     }
@@ -55,6 +57,7 @@ public class SystemUserController {
     @Operation(summary = "修改用户")
     @PutMapping("/{userId}")
     @PreAuthorize("hasAuthority('sys:user:update')")
+    @AuditLog(module = "系统管理", operation = "修改用户")
     public ApiResponse<Void> updateUser(
             @PathVariable Long userId,
             @Valid @RequestBody SystemManageRequests.UserSaveRequest request

@@ -143,17 +143,18 @@ public class MockTicketDataService {
                     LocalDateTime createdAt = LocalDateTime.now().minusDays(index % 20L).minusHours(index * 2L);
 
                     return new TicketResponses.TicketListItemResponse(
-                            "TID-" + index,
+                            (long) index,
                             String.format("WO20260319%04d", index),
                             "核心业务系统异常处理 - " + index,
                             "提交人" + ((index % 8) + 1),
-                            index % 2 == 0 ? "用户手工提交" : "客服代录入",
+                            index % 2 == 0 ? "USER_SUBMIT" : "SERVICE_ENTRY",
                             TICKET_TYPES.get(index % TICKET_TYPES.size()),
-                            CATEGORY_NAMES.get(index % CATEGORY_NAMES.size()),
+                            CATEGORY_NAMES.get(index % CATEGORY_NAMES.size()).toUpperCase().replace(" ", "_"),
                             priority.name(),
-                            index % 4 == 0 ? "CRITICAL" : index % 3 == 0 ? "HIGH" : "MEDIUM",
                             status.name(),
+                            (long) (index % ASSIGNEES.size() + 1),
                             ASSIGNEES.get(index % ASSIGNEES.size()),
+                            (long) (index % GROUPS.size() + 1),
                             GROUPS.get(index % GROUPS.size()),
                             index % 6 == 0,
                             index % 7 == 0 || status == TicketStatus.SUSPENDED,
@@ -166,91 +167,43 @@ public class MockTicketDataService {
     }
 
     public TicketResponses.TicketDetailResponse getTicketDetail(String ticketId) {
-        TicketResponses.TicketListItemResponse summary = listTickets().stream()
-                .filter(item -> item.ticketId().equals(ticketId))
-                .findFirst()
-                .orElse(listTickets().get(0));
-
-        LocalDateTime createdAt = summary.createdAt();
-        LocalDateTime acceptedAt = createdAt.plusMinutes(20);
-        LocalDateTime assignedAt = acceptedAt.plusMinutes(15);
-        LocalDateTime completedAt = summary.status().equals(TicketStatus.PENDING_CONFIRM.name())
-                || summary.status().equals(TicketStatus.COMPLETED.name())
-                || summary.status().equals(TicketStatus.CLOSED.name())
-                ? assignedAt.plusHours(4)
-                : null;
-
-        List<TicketResponses.TicketFlowRecordResponse> flowRecords = new ArrayList<>();
-        flowRecords.add(new TicketResponses.TicketFlowRecordResponse(
-                TicketActionType.CREATE.name(),
-                summary.requesterName(),
-                null,
-                TicketStatus.PENDING_ACCEPT.name(),
-                "提交工单并上传错误截图",
-                createdAt
-        ));
-        flowRecords.add(new TicketResponses.TicketFlowRecordResponse(
-                TicketActionType.ACCEPT.name(),
-                "王客服",
-                TicketStatus.PENDING_ACCEPT.name(),
-                TicketStatus.ACCEPTED.name(),
-                "工单有效，进入分类流程",
-                acceptedAt
-        ));
-        flowRecords.add(new TicketResponses.TicketFlowRecordResponse(
-                TicketActionType.ASSIGN.name(),
-                "王客服",
-                TicketStatus.ACCEPTED.name(),
-                TicketStatus.PROCESSING.name(),
-                "分派至 " + summary.currentGroupName() + " / " + summary.currentAssigneeName(),
-                assignedAt
-        ));
-        if (completedAt != null) {
-            flowRecords.add(new TicketResponses.TicketFlowRecordResponse(
-                    TicketActionType.SUBMIT_SOLUTION.name(),
-                    summary.currentAssigneeName(),
-                    TicketStatus.PROCESSING.name(),
-                    TicketStatus.PENDING_CONFIRM.name(),
-                    "已提交解决方案，等待用户确认",
-                    completedAt
-            ));
-        }
-
-        List<TicketResponses.TicketCommentResponse> comments = List.of(
-                new TicketResponses.TicketCommentResponse("CMT-1", summary.requesterName(), "REQUESTER", "问题在高峰期频繁出现，请尽快处理。", createdAt.plusMinutes(5)),
-                new TicketResponses.TicketCommentResponse("CMT-2", "王客服", "CUSTOMER_SERVICE", "已完成工单受理，正在安排处理人。", acceptedAt),
-                new TicketResponses.TicketCommentResponse("CMT-3", summary.currentAssigneeName(), "TECHNICIAN", "已定位为接口网关超时，正在执行优化。", assignedAt.plusMinutes(30))
-        );
-
+        TicketResponses.TicketListItemResponse summary = listTickets().stream().findFirst().orElseThrow();
         return new TicketResponses.TicketDetailResponse(
                 summary.ticketId(),
                 summary.ticketNo(),
                 summary.title(),
-                "客户反馈核心业务流程在高峰期出现异常，请求技术支持快速定位并恢复，涉及接口超时和页面卡顿。",
+                "mock detail",
+                0L,
                 summary.requesterName(),
                 "13800001234",
-                "华东大客户中心",
-                DEPARTMENTS.get(0),
-                summary.source(),
-                summary.ticketType(),
-                summary.categoryName(),
-                summary.priority(),
-                summary.urgencyLevel(),
-                summary.status(),
-                summary.currentAssigneeName(),
-                summary.currentGroupName(),
-                createdAt.plusHours(2),
-                createdAt.plusHours(8),
-                createdAt,
-                acceptedAt,
-                assignedAt,
-                completedAt,
-                summary.status().equals(TicketStatus.CLOSED.name()) ? completedAt.plusHours(2) : null,
-                "满意",
-                "处理及时，沟通顺畅。",
-                TAG_POOL.subList(0, 3),
-                flowRecords,
-                comments
+                0,
+                summary.sourceCode(),
+                summary.ticketTypeCode(),
+                summary.categoryCode(),
+                summary.priorityCode(),
+                summary.currentStatus(),
+                summary.currentHandlerUserId(),
+                summary.currentHandlerName(),
+                summary.currentHandleGroupId(),
+                summary.currentHandleGroupName(),
+                summary.escalatedFlag() ? 1 : 0,
+                null,
+                null,
+                summary.timeoutFlag() ? 1 : 0,
+                LocalDateTime.now(),
+                LocalDateTime.now().plusHours(1),
+                summary.createdAt(),
+                summary.createdAt().plusMinutes(10),
+                summary.createdAt().plusMinutes(20),
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                List.of(),
+                List.of(),
+                List.of()
         );
     }
 
@@ -269,37 +222,37 @@ public class MockTicketDataService {
 
     public DispatchResponses.DispatchBoardResponse getDispatchBoard() {
         List<DispatchResponses.DispatchTicketResponse> dispatchTickets = listTickets().stream()
-                .filter(ticket -> ticket.status().equals(TicketStatus.PENDING_ASSIGN.name()) || ticket.status().equals(TicketStatus.REOPENED.name()))
+                .filter(ticket -> ticket.currentStatus().equals(TicketStatus.PENDING_ASSIGN.name()) || ticket.currentStatus().equals(TicketStatus.REOPENED.name()))
                 .limit(8)
                 .map(ticket -> new DispatchResponses.DispatchTicketResponse(
                         ticket.ticketNo(),
                         ticket.title(),
-                        ticket.categoryName(),
-                        ticket.priority(),
-                        ticket.categoryName().contains("系统") ? "运维保障组" : "应用支持组",
-                        ticket.categoryName().contains("接口") ? "周工" : "陈工",
+                        ticket.categoryCode(),
+                        ticket.priorityCode(),
+                        ticket.categoryCode().contains("SYSTEM") ? "运维保障组" : "应用支持组",
+                        ticket.categoryCode().contains("API") ? "周工" : "陈工",
                         ticket.createdAt()
                 ))
                 .toList();
 
         return new DispatchResponses.DispatchBoardResponse(
                 dispatchTickets.size(),
-                listTickets().stream().filter(TicketResponses.TicketListItemResponse::escalated).count(),
+                listTickets().stream().filter(TicketResponses.TicketListItemResponse::escalatedFlag).count(),
                 dispatchTickets
         );
     }
 
     public SlaResponses.SlaOverviewResponse getSlaOverview() {
         List<SlaResponses.SlaRuleResponse> rules = List.of(
-                new SlaResponses.SlaRuleResponse("SLA-INC-P1", "P1 故障响应规则", "系统故障", 15, 120, 5, 20, true),
-                new SlaResponses.SlaRuleResponse("SLA-INC-P2", "P2 故障响应规则", "接口异常", 30, 240, 10, 30, true),
-                new SlaResponses.SlaRuleResponse("SLA-SRV-P3", "一般服务请求规则", "账号权限", 60, 480, 20, 60, false)
+                new SlaResponses.SlaRuleResponse(1L, "P1", 15, 120, 1, "mock"),
+                new SlaResponses.SlaRuleResponse(2L, "P2", 30, 240, 1, "mock"),
+                new SlaResponses.SlaRuleResponse(3L, "P3", 60, 480, 1, "mock")
         );
 
         List<SlaResponses.SlaAlertResponse> alerts = List.of(
-                new SlaResponses.SlaAlertResponse("WO202603190012", "支付接口超时", "即将响应超时", "王客服", "客服台", "15 分钟"),
-                new SlaResponses.SlaAlertResponse("WO202603190018", "业务报表生成缓慢", "即将解决超时", "陈工", "应用支持组", "45 分钟"),
-                new SlaResponses.SlaAlertResponse("WO202603190027", "生产数据库连接告警", "已超时并升级", "赵主管", "运维保障组", "已超时 20 分钟")
+                new SlaResponses.SlaAlertResponse(1L, "WO202603190012", "支付接口超时", "即将响应超时", "王客服", "客服台", "15 分钟"),
+                new SlaResponses.SlaAlertResponse(2L, "WO202603190018", "业务报表生成缓慢", "即将解决超时", "陈工", "应用支持组", "45 分钟"),
+                new SlaResponses.SlaAlertResponse(3L, "WO202603190027", "生产数据库连接告警", "已超时并升级", "赵主管", "运维保障组", "已超时 20 分钟")
         );
 
         return new SlaResponses.SlaOverviewResponse(rules, alerts);
@@ -317,56 +270,56 @@ public class MockTicketDataService {
                 .toList();
 
         List<ReportResponses.MetricItem> byStatus = groupMetric(
-                tickets.stream().collect(java.util.stream.Collectors.groupingBy(TicketResponses.TicketListItemResponse::status, java.util.stream.Collectors.counting()))
+                tickets.stream().collect(java.util.stream.Collectors.groupingBy(TicketResponses.TicketListItemResponse::currentStatus, java.util.stream.Collectors.counting()))
         );
-        List<ReportResponses.MetricItem> byCategory = groupMetric(
-                tickets.stream().collect(java.util.stream.Collectors.groupingBy(TicketResponses.TicketListItemResponse::categoryName, java.util.stream.Collectors.counting()))
+        List<ReportResponses.MetricItem> byPriority = groupMetric(
+                tickets.stream().collect(java.util.stream.Collectors.groupingBy(TicketResponses.TicketListItemResponse::priorityCode, java.util.stream.Collectors.counting()))
+        );
+        List<ReportResponses.MetricItem> byGroup = groupMetric(
+                tickets.stream().collect(java.util.stream.Collectors.groupingBy(TicketResponses.TicketListItemResponse::currentHandleGroupName, java.util.stream.Collectors.counting()))
         );
         List<ReportResponses.MetricItem> byAssignee = groupMetric(
-                tickets.stream().collect(java.util.stream.Collectors.groupingBy(TicketResponses.TicketListItemResponse::currentAssigneeName, java.util.stream.Collectors.counting()))
-        );
-        List<ReportResponses.MetricItem> byDepartment = groupMetric(
-                Map.of("客户成功部", 11L, "财务部", 7L, "供应链部", 9L, "营销中心", 10L, "信息化部", 11L)
+                tickets.stream().collect(java.util.stream.Collectors.groupingBy(TicketResponses.TicketListItemResponse::currentHandlerName, java.util.stream.Collectors.counting()))
         );
         List<ReportResponses.MetricItem> slaStats = List.of(
                 new ReportResponses.MetricItem("SLA 达成工单", 42, "91.4%"),
                 new ReportResponses.MetricItem("响应超时工单", 3, "平均响应 38 分钟"),
                 new ReportResponses.MetricItem("解决超时工单", 4, "平均解决 5.2 小时")
         );
-        List<ReportResponses.MetricItem> satisfaction = List.of(
-                new ReportResponses.MetricItem("满意", 24, "5分"),
-                new ReportResponses.MetricItem("一般", 6, "3-4分"),
-                new ReportResponses.MetricItem("不满意", 2, "1-2分")
+        List<ReportResponses.MetricItem> timeout = List.of(
+                new ReportResponses.MetricItem("超时工单", 7, ""),
+                new ReportResponses.MetricItem("升级工单", 4, ""),
+                new ReportResponses.MetricItem("重开工单", 2, "")
         );
 
         return new ReportResponses.ReportOverviewResponse(
                 trend,
                 byStatus,
-                byCategory,
+                byPriority,
+                byGroup,
                 byAssignee,
-                byDepartment,
                 slaStats,
-                satisfaction
+                timeout
         );
     }
 
     public NotificationResponses.NotificationCenterResponse getNotificationCenter() {
         List<NotificationResponses.NotificationMessageResponse> messages = List.of(
-                new NotificationResponses.NotificationMessageResponse("MSG-1", "新工单待受理", "INTERNAL", "王客服", "工单 WO202603190012 待受理。", false, LocalDateTime.now().minusMinutes(12)),
-                new NotificationResponses.NotificationMessageResponse("MSG-2", "SLA 预警", "INTERNAL", "陈工", "工单 WO202603190018 即将解决超时。", false, LocalDateTime.now().minusMinutes(25)),
-                new NotificationResponses.NotificationMessageResponse("MSG-3", "邮件通知已发送", "EMAIL", "李晓明", "您的工单已进入待确认状态。", true, LocalDateTime.now().minusHours(2))
+                new NotificationResponses.NotificationMessageResponse(1L, "新工单待受理", "工单 WO202603190012 待受理。", "INTERNAL", "TICKET", 1L, false, null, LocalDateTime.now().minusMinutes(12)),
+                new NotificationResponses.NotificationMessageResponse(2L, "SLA 预警", "工单 WO202603190018 即将解决超时。", "INTERNAL", "TICKET", 2L, false, null, LocalDateTime.now().minusMinutes(25)),
+                new NotificationResponses.NotificationMessageResponse(3L, "邮件通知已发送", "您的工单已进入待确认状态。", "EMAIL", "TICKET", 3L, true, LocalDateTime.now().minusHours(2), LocalDateTime.now().minusHours(2))
         );
         return new NotificationResponses.NotificationCenterResponse(2, messages);
     }
 
     public AuditResponses.AuditLogPageResponse getAuditLogPage() {
         List<AuditResponses.AuditLogResponse> records = List.of(
-                new AuditResponses.AuditLogResponse("AUD-1", "工单管理", "创建工单", "李晓明", "/api/v1/tickets", "SUCCESS", LocalDateTime.now().minusHours(8)),
-                new AuditResponses.AuditLogResponse("AUD-2", "分派中心", "分派工单", "王客服", "/api/v1/dispatch/assign", "SUCCESS", LocalDateTime.now().minusHours(6)),
-                new AuditResponses.AuditLogResponse("AUD-3", "SLA 管理", "升级工单", "赵主管", "/api/v1/sla/escalate", "SUCCESS", LocalDateTime.now().minusHours(3)),
-                new AuditResponses.AuditLogResponse("AUD-4", "系统配置", "修改角色权限", "系统管理员", "/api/v1/system/roles", "SUCCESS", LocalDateTime.now().minusHours(1))
+                new AuditResponses.AuditLogResponse(1L, 1L, "工单管理", "创建工单", "李晓明", 1L, "创建成功", "/api/v1/tickets", "127.0.0.1", LocalDateTime.now().minusHours(8)),
+                new AuditResponses.AuditLogResponse(2L, 2L, "分派中心", "分派工单", "王客服", 2L, "分派成功", "/api/v1/dispatch/assign", "127.0.0.1", LocalDateTime.now().minusHours(6)),
+                new AuditResponses.AuditLogResponse(3L, 3L, "SLA 管理", "升级工单", "赵主管", 3L, "升级成功", "/api/v1/sla/escalate", "127.0.0.1", LocalDateTime.now().minusHours(3)),
+                new AuditResponses.AuditLogResponse(4L, 4L, "系统配置", "修改角色权限", "系统管理员", 4L, "修改成功", "/api/v1/system/roles", "127.0.0.1", LocalDateTime.now().minusHours(1))
         );
-        return new AuditResponses.AuditLogPageResponse(records.size(), records);
+        return new AuditResponses.AuditLogPageResponse(1, 10, records.size(), records);
     }
 
     public SystemResponses.SystemConfigOverviewResponse getSystemConfigOverview() {
@@ -395,7 +348,7 @@ public class MockTicketDataService {
     }
 
     private long countByStatus(List<TicketResponses.TicketListItemResponse> tickets, TicketStatus status) {
-        return tickets.stream().filter(ticket -> ticket.status().equals(status.name())).count();
+        return tickets.stream().filter(ticket -> ticket.currentStatus().equals(status.name())).count();
     }
 
     private List<ReportResponses.MetricItem> groupMetric(Map<String, Long> groups) {

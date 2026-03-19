@@ -9,13 +9,15 @@ public final class NotificationResponses {
     }
 
     public record NotificationMessageResponse(
-            String messageId,
-            String title,
-            String channel,
-            String receiverName,
-            String content,
-            boolean read,
-            LocalDateTime sentAt
+            Long noticeId,
+            String noticeTitle,
+            String noticeContent,
+            String noticeType,
+            String businessType,
+            Long businessId,
+            boolean readFlag,
+            LocalDateTime readTime,
+            LocalDateTime createdAt
     ) {
     }
 

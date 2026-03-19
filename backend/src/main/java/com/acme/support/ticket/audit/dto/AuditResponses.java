@@ -9,17 +9,22 @@ public final class AuditResponses {
     }
 
     public record AuditLogResponse(
-            String logId,
+            Long auditLogId,
+            Long operatorUserId,
             String moduleName,
-            String operationName,
+            String operationType,
             String operatorName,
+            Long businessId,
+            String operationDescription,
             String requestPath,
-            String result,
-            LocalDateTime operatedAt
+            String requestIp,
+            LocalDateTime createdAt
     ) {
     }
 
     public record AuditLogPageResponse(
+            long current,
+            long size,
             long total,
             List<AuditLogResponse> records
     ) {

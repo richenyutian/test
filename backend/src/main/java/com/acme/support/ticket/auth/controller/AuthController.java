@@ -1,5 +1,6 @@
 package com.acme.support.ticket.auth.controller;
 
+import com.acme.support.ticket.audit.annotation.AuditLog;
 import com.acme.support.ticket.auth.dto.AuthResponses;
 import com.acme.support.ticket.auth.dto.LoginRequest;
 import com.acme.support.ticket.auth.service.AuthFacadeService;
@@ -33,6 +34,7 @@ public class AuthController {
 
     @Operation(summary = "账号登录")
     @PostMapping("/login")
+    @AuditLog(module = "认证中心", operation = "登录")
     public ApiResponse<AuthResponses.LoginResponse> login(@Valid @RequestBody LoginRequest request) {
         return ApiResponse.success("登录成功", authFacadeService.login(request.username()));
     }
@@ -46,6 +48,7 @@ public class AuthController {
 
     @Operation(summary = "退出登录")
     @PostMapping("/logout")
+    @AuditLog(module = "认证中心", operation = "退出登录")
     public ApiResponse<Void> logout(HttpServletRequest request) {
         String authHeader = request.getHeader(SecurityConstants.AUTHORIZATION_HEADER);
 
