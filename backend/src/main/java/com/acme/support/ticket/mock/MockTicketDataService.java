@@ -77,11 +77,10 @@ public class MockTicketDataService {
 
     public AuthResponses.UserProfileResponse buildUserProfile(MockUserAccount account) {
         return new AuthResponses.UserProfileResponse(
-                account.userId(),
+                0L,
                 account.username(),
                 account.displayName(),
-                account.departmentName(),
-                account.teamName(),
+                "INTERNAL",
                 account.roles(),
                 account.menuPermissions(),
                 account.buttonPermissions(),
