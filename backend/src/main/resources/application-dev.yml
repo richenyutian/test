@@ -1,0 +1,45 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://127.0.0.1:5432/work_order_service
+    username: postgres
+    password: postgres
+    driver-class-name: org.postgresql.Driver
+  data:
+    redis:
+      host: 127.0.0.1
+      port: 6379
+      password:
+      database: 0
+  servlet:
+    multipart:
+      max-file-size: 20MB
+      max-request-size: 50MB
+
+mybatis-plus:
+  global-config:
+    banner: false
+    db-config:
+      id-type: auto
+      logic-delete-field: deleted_flag
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+
+jwt:
+  issuer: work-order-service
+  secret: change-this-demo-jwt-secret-key-with-at-least-32-characters
+  expire-minutes: 120
+
+app:
+  auth:
+    sso-enabled: false
+  file:
+    upload-path: ./storage/upload
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info

@@ -1,0 +1,9 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://127.0.0.1:5432/work_order_service
+    username: postgres
+    password: postgres
+  data:
+    redis:
+      host: 127.0.0.1
+      port: 6379

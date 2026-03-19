@@ -19,11 +19,10 @@ public final class AuthResponses {
 
     @Schema(description = "当前登录用户")
     public record UserProfileResponse(
-            String userId,
+            Long userId,
             String username,
             String displayName,
-            String departmentName,
-            String teamName,
+            String userType,
             List<String> roles,
             List<String> menuPermissions,
             List<String> buttonPermissions,

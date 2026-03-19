@@ -8,23 +8,18 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 /**
- * 系统用户实体。
+ * 角色实体。
  */
 @Data
-@TableName("sys_user")
-public class SysUserEntity {
+@TableName("sys_role")
+public class SysRoleEntity {
 
     @TableId(type = IdType.AUTO)
-    private Long userId;
-    private String username;
-    private String displayName;
-    private String userType;
-    private Integer externalUserFlag;
-    private String phone;
-    private String email;
+    private Long roleId;
+    private String roleCode;
+    private String roleName;
+    private String dataScope;
     private String status;
-    private String ssoSubject;
-    private LocalDateTime lastLoginAt;
     private String remark;
     private Integer deletedFlag;
     private LocalDateTime createdAt;

@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
@@ -33,7 +34,7 @@ public class JwtTokenProvider {
         this.expireMinutes = expireMinutes;
     }
 
-    public String createToken(String userId, String username, List<String> roles) {
+    public String createToken(Long userId, String username, List<String> roles, List<String> authorities) {
         Instant now = Instant.now();
         Instant expireAt = now.plus(expireMinutes, ChronoUnit.MINUTES);
 
@@ -42,6 +43,7 @@ public class JwtTokenProvider {
                 .subject(username)
                 .claim("userId", userId)
                 .claim("roles", roles)
+                .claim("authorities", authorities)
                 .issuedAt(Date.from(now))
                 .expiration(Date.from(expireAt))
                 .signWith(secretKey)
@@ -54,5 +56,14 @@ public class JwtTokenProvider {
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();
+    }
+
+    public Duration getRemainingTtl(String token) {
+        Claims claims = parseToken(token);
+        long seconds = Math.max(
+                1L,
+                claims.getExpiration().toInstant().getEpochSecond() - Instant.now().getEpochSecond()
+        );
+        return Duration.ofSeconds(seconds);
     }
 }

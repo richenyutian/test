@@ -1,8 +1,10 @@
 package com.acme.support.ticket;
 
+import com.acme.support.ticket.config.AppProperties;
 import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 
 /**
  * 工单处理系统后端启动类。
@@ -13,6 +15,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  */
 @SpringBootApplication
 @MapperScan("com.acme.support.ticket.**.mapper")
+@EnableConfigurationProperties(AppProperties.class)
 public class TicketServiceApplication {
 
 	public static void main(String[] args) {

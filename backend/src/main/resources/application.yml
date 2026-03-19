@@ -1,63 +1,13 @@
 spring:
   application:
-    name: ticket-service
-  datasource:
-    url: ${DB_URL:jdbc:postgresql://127.0.0.1:5432/ticket_system}
-    username: ${DB_USERNAME:postgres}
-    password: ${DB_PASSWORD:postgres}
-    driver-class-name: org.postgresql.Driver
-  data:
-    redis:
-      host: ${REDIS_HOST:127.0.0.1}
-      port: ${REDIS_PORT:6379}
-      password: ${REDIS_PASSWORD:}
-      database: ${REDIS_DATABASE:0}
-  mail:
-    host: ${MAIL_HOST:localhost}
-    port: ${MAIL_PORT:1025}
-    username: ${MAIL_USERNAME:}
-    password: ${MAIL_PASSWORD:}
-    properties:
-      mail:
-        smtp:
-          auth: false
-          starttls:
-            enable: false
+    name: work-order-service
+  profiles:
+    active: dev
 
 server:
-  port: ${SERVER_PORT:8080}
+  port: 8080
   servlet:
     context-path: /api
-
-mybatis-plus:
-  global-config:
-    banner: false
-    db-config:
-      id-type: assign_uuid
-      logic-delete-field: deleted
-      logic-delete-value: 1
-      logic-not-delete-value: 0
-  configuration:
-    map-underscore-to-camel-case: true
-    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
-
-management:
-  endpoints:
-    web:
-      exposure:
-        include: health,info
-
-jwt:
-  issuer: ticket-system
-  secret: ${JWT_SECRET:ticket-system-demo-secret-key-for-jwt-token-sign}
-  expire-minutes: 120
-
-ticket:
-  mock:
-    enabled: true
-  sla:
-    response-warning-minutes: 30
-    resolve-warning-minutes: 60
 
 springdoc:
   swagger-ui:
