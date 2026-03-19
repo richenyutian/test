@@ -12,6 +12,8 @@ const reportSummary = computed(() => [
   { label: 'SLA 达成率', value: '91.4%' },
   { label: '用户满意度', value: '4.6 / 5' },
 ])
+
+const getStatusLabel = (status: keyof typeof statusLabelMap) => statusLabelMap[status]
 </script>
 
 <template>
@@ -35,7 +37,7 @@ const reportSummary = computed(() => [
         </template>
         <el-table :data="store.statusStatistics" border>
           <el-table-column label="状态">
-            <template #default="{ row }">{{ statusLabelMap[row.name] || row.name }}</template>
+            <template #default="{ row }">{{ getStatusLabel(row.name as keyof typeof statusLabelMap) || row.name }}</template>
           </el-table-column>
           <el-table-column prop="count" label="数量" width="100" />
         </el-table>

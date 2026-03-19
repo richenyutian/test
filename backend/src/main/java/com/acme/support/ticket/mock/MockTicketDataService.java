@@ -170,7 +170,7 @@ public class MockTicketDataService {
         TicketResponses.TicketListItemResponse summary = listTickets().stream()
                 .filter(item -> item.ticketId().equals(ticketId))
                 .findFirst()
-                .orElse(listTickets().getFirst());
+                .orElse(listTickets().get(0));
 
         LocalDateTime createdAt = summary.createdAt();
         LocalDateTime acceptedAt = createdAt.plusMinutes(20);
@@ -384,7 +384,7 @@ public class MockTicketDataService {
 
         List<SystemResponses.RolePermissionResponse> rolePermissions = USER_ACCOUNTS.stream()
                 .map(account -> new SystemResponses.RolePermissionResponse(
-                        account.roles().getFirst(),
+                        account.roles().get(0),
                         account.displayName() + "角色样例",
                         account.menuPermissions(),
                         account.buttonPermissions(),

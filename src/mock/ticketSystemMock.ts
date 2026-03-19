@@ -4,6 +4,7 @@ import type {
   NotificationMessage,
   RolePermissionMatrix,
   SlaRule,
+  TicketActionRecord,
   TicketRecord,
   TicketStatus,
   UserProfile,
@@ -18,13 +19,6 @@ const categories = [
   { code: 'PERFORMANCE', name: '性能问题' },
   { code: 'REPORT', name: '报表问题' },
   { code: 'DEPLOY', name: '环境部署' },
-]
-
-const teams = [
-  { code: 'CS-DESK', name: '客服台' },
-  { code: 'TS-APP', name: '应用支持组' },
-  { code: 'TS-OPS', name: '运维保障组' },
-  { code: 'RD-COOP', name: '研发协同组' },
 ]
 
 const assignees = [
@@ -326,11 +320,11 @@ function buildFlowRecords(
   completedDate: Date,
   assigneeName: string,
 ) {
-  const records = [
+  const records: TicketActionRecord[] = [
     {
       actionType: 'CREATE',
       operatorName: '提交人',
-      fromStatus: '' as const,
+      fromStatus: '',
       toStatus: 'PENDING_ACCEPT' as TicketStatus,
       remark: '用户提交工单，系统生成工单编号并通知客服。',
       operatedAt: createdDate.toISOString(),

@@ -7,6 +7,7 @@ import { formatDateTime, statusLabelMap } from '../utils/ticketSystem'
 const store = useTicketWorkbenchStore()
 
 const latestTickets = computed(() => store.tickets.slice(0, 8))
+const getStatusLabel = (status: keyof typeof statusLabelMap) => statusLabelMap[status]
 </script>
 
 <template>
@@ -70,7 +71,7 @@ const latestTickets = computed(() => store.tickets.slice(0, 8))
             class="record-card"
           >
             <div class="chip-row" style="justify-content: space-between">
-              <span>{{ statusLabelMap[item.name as keyof typeof statusLabelMap] || item.name }}</span>
+              <span>{{ getStatusLabel(item.name as keyof typeof statusLabelMap) || item.name }}</span>
               <strong>{{ item.count }}</strong>
             </div>
           </div>
@@ -95,7 +96,7 @@ const latestTickets = computed(() => store.tickets.slice(0, 8))
         <el-table-column prop="currentAssigneeName" label="当前处理人" width="120" />
         <el-table-column label="状态" width="120">
           <template #default="{ row }">
-            {{ statusLabelMap[row.status] }}
+            {{ getStatusLabel(row.status) }}
           </template>
         </el-table-column>
         <el-table-column label="创建时间" min-width="170">

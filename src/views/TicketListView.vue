@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { computed, reactive } from 'vue'
+import { computed, reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useRouter } from 'vue-router'
 
 import { useTicketWorkbenchStore } from '../stores/ticketWorkbenchStore'
 import { useAuthStore } from '../stores/authStore'
 import { formatDateTime, sourceLabelMap, statusLabelMap, statusTagTypeMap } from '../utils/ticketSystem'
+import type { TicketRecord } from '../types/ticketSystem'
 
 const router = useRouter()
 const store = useTicketWorkbenchStore()
@@ -17,9 +18,7 @@ const filters = reactive({
   categoryName: '',
 })
 
-const createDialogVisible = reactive({
-  value: false,
-})
+const createDialogVisible = ref(false)
 
 const createForm = reactive({
   title: '',
@@ -51,8 +50,16 @@ const filteredTickets = computed(() =>
   }),
 )
 
+const getSourceLabel = (source: TicketRecord['source']) => sourceLabelMap[source]
+const getStatusTagType = (status: TicketRecord['status']) => statusTagTypeMap[status]
+const getStatusLabel = (status: TicketRecord['status']) => statusLabelMap[status]
+
 const openCreateDialog = () => {
   createDialogVisible.value = true
+}
+
+const closeCreateDialog = () => {
+  createDialogVisible.value = false
 }
 
 const submitCreate = () => {
@@ -139,14 +146,14 @@ const submitCreate = () => {
         <el-table-column prop="ticketNo" label="工单编号" min-width="160" />
         <el-table-column prop="title" label="标题" min-width="260" />
         <el-table-column label="来源" width="120">
-          <template #default="{ row }">{{ sourceLabelMap[row.source] }}</template>
+          <template #default="{ row }">{{ getSourceLabel(row.source) }}</template>
         </el-table-column>
         <el-table-column prop="categoryName" label="分类" width="120" />
         <el-table-column prop="priority" label="优先级" width="90" />
         <el-table-column prop="currentAssigneeName" label="处理人" width="120" />
         <el-table-column label="状态" width="130">
           <template #default="{ row }">
-            <el-tag :type="statusTagTypeMap[row.status]">{{ statusLabelMap[row.status] }}</el-tag>
+            <el-tag :type="getStatusTagType(row.status)">{{ getStatusLabel(row.status) }}</el-tag>
           </template>
         </el-table-column>
         <el-table-column label="是否超时" width="100">
@@ -169,7 +176,7 @@ const submitCreate = () => {
       </el-table>
     </el-card>
 
-    <el-dialog v-model="createDialogVisible.value" title="新建工单" width="720px">
+    <el-dialog v-model="createDialogVisible" title="新建工单" width="720px">
       <el-form label-position="top">
         <el-row :gutter="16">
           <el-col :span="12">
@@ -224,7 +231,7 @@ const submitCreate = () => {
 
       <template #footer>
         <div class="chip-row" style="justify-content: flex-end">
-          <el-button @click="createDialogVisible.value = false">取消</el-button>
+          <el-button @click="closeCreateDialog">取消</el-button>
           <el-button type="primary" @click="submitCreate">提交工单</el-button>
         </div>
       </template>
