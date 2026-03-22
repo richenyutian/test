@@ -70,6 +70,21 @@ body {
   color: #fff !important;
 }
 
+/* 内联二级菜单未继承侧栏变量时默认为白底深色字，导致浅色字不可见 */
+.sidebar-menu .el-sub-menu .el-menu {
+  background: transparent !important;
+}
+
+.sidebar-menu .el-sub-menu .el-menu .el-menu-item {
+  color: rgba(255, 255, 255, 0.9) !important;
+}
+
+.sidebar-menu .el-sub-menu .el-menu .el-menu-item.is-active,
+.sidebar-menu .el-sub-menu .el-menu .el-menu-item:hover {
+  background: rgba(255, 255, 255, 0.1) !important;
+  color: #fff !important;
+}
+
 .layout-content {
   flex: 1;
   display: flex;
