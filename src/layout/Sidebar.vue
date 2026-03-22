@@ -64,6 +64,9 @@ const handleSelect = (index: string) => {
 
     <el-menu
       class="sidebar-menu"
+      background-color="transparent"
+      text-color="rgba(255, 255, 255, 0.9)"
+      active-text-color="#ffffff"
       :default-active="route.path"
       @select="handleSelect"
     >
